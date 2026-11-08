@@ -29,6 +29,30 @@ class VnTag {
       );
 }
 
+/// One screenshot. [sexual]/[violence] use VNDB's 0–2 scale.
+class VnScreenshot {
+  const VnScreenshot({
+    required this.url,
+    required this.thumbnail,
+    this.sexual = 0,
+    this.violence = 0,
+  });
+
+  final String url;
+  final String thumbnail;
+  final double sexual;
+  final double violence;
+
+  bool get isSensitive => sexual >= 1 || violence >= 1;
+
+  factory VnScreenshot.fromJson(Map<String, dynamic> j) => VnScreenshot(
+        url: j['url'] as String,
+        thumbnail: (j['thumbnail'] as String?) ?? j['url'] as String,
+        sexual: (j['sexual'] as num?)?.toDouble() ?? 0,
+        violence: (j['violence'] as num?)?.toDouble() ?? 0,
+      );
+}
+
 /// A visual novel as returned by VNDB.
 ///
 /// Only the fields Vndex asks for are here. If you add a field, also add it
@@ -47,6 +71,7 @@ class Vn {
     this.developers = const [],
     this.description,
     this.tags = const [],
+    this.screenshots = const [],
   });
 
   final String id; // e.g. "v17"
@@ -66,6 +91,10 @@ class Vn {
   /// Only loaded on the detail screen. Spoiler tags are already removed,
   /// sorted most relevant first.
   final List<VnTag> tags;
+
+  /// Only loaded on the detail screen, and not saved offline (they're
+  /// images from the internet anyway).
+  final List<VnScreenshot> screenshots;
 
   /// Covers rated suggestive or worse get blurred until tapped.
   bool get isCoverSensitive => imageSexual >= 1 || imageViolence >= 1;
@@ -126,6 +155,7 @@ class Vn {
     final image = json['image'] as Map<String, dynamic>?;
     final devs = (json['developers'] as List<dynamic>?) ?? const [];
     final rawTags = (json['tags'] as List<dynamic>?) ?? const [];
+    final rawShots = (json['screenshots'] as List<dynamic>?) ?? const [];
 
     // Keep only spoiler-free, non-disputed tags, most relevant first, max 20.
     final tags = [
@@ -154,6 +184,10 @@ class Vn {
       ],
       description: json['description'] as String?,
       tags: tags.take(20).toList(),
+      screenshots: [
+        for (final sc in rawShots.cast<Map<String, dynamic>>())
+          VnScreenshot.fromJson(sc),
+      ],
     );
   }
 }

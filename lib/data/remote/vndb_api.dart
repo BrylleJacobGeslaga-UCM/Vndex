@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../../core/constants.dart';
 import '../../models/browse_filter.dart';
+import '../../models/character.dart';
 import '../../models/vn.dart';
 
 /// Thrown when a VNDB request fails, with a message safe to show the user.
@@ -48,7 +49,8 @@ class VndbApi {
 
   /// Extra fields for the detail screen.
   static const String _detailFields =
-      '$_listFields, description, tags{id,name,rating,spoiler,lie,category}';
+      '$_listFields, description, tags{id,name,rating,spoiler,lie,category}, '
+      'screenshots{url,thumbnail,sexual,violence}';
 
   /// Fetch one VN with full details (description, tags) by id, e.g. "v17".
   /// Returns null if it doesn't exist.
@@ -102,6 +104,21 @@ class VndbApi {
           name: t['name'] as String,
           category: t['category'] as String? ?? 'cont',
         ),
+    ];
+  }
+
+  /// Characters of one VN (up to 100), for the detail screen.
+  /// Spoiler characters are removed in [VnCharacter.fromJson]'s caller.
+  Future<List<VnCharacter>> getCharacters(String vnId) async {
+    final body = await _post('/character', {
+      'filters': ['vn', '=', ['id', '=', vnId]],
+      'fields': 'name, original, description, '
+          'image{url,sexual,violence}, vns{id,role,spoiler}',
+      'results': 100,
+    });
+    return [
+      for (final c in (body['results'] as List<dynamic>).cast<Map<String, dynamic>>())
+        if (VnCharacter.fromJson(c, vnId) case final ch?) ch,
     ];
   }
 

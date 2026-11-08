@@ -6,6 +6,7 @@ import '../data/remote/vndb_api.dart';
 import '../data/repository/vn_repository.dart';
 import '../models/app_settings.dart';
 import '../models/browse_filter.dart';
+import '../models/character.dart';
 import '../models/user_entry.dart';
 import '../models/vn.dart';
 import '../models/vn_status.dart';
@@ -56,6 +57,11 @@ class LibrarySearch extends Notifier<String> {
 
   void set(String query) => state = query;
 }
+
+/// Characters of one VN (detail screen).
+final vnCharactersProvider = FutureProvider.family<List<VnCharacter>, String>(
+  (ref, vnId) => ref.watch(vnRepositoryProvider).getCharacters(vnId),
+);
 
 /// Your saved Browse filters. Invalidate after saving or deleting one.
 final savedSearchesProvider = FutureProvider<List<SavedSearch>>(

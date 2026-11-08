@@ -1,6 +1,7 @@
 import 'package:sembast/sembast.dart';
 
 import '../../models/browse_filter.dart';
+import '../../models/character.dart';
 import '../../models/user_entry.dart';
 import '../../models/vn.dart';
 import '../../models/vn_status.dart';
@@ -32,6 +33,16 @@ class VnRepository {
     int page = 1,
   }) =>
       _api.browse(filters: filters, sort: sort, reverse: reverse, page: page);
+
+  /// Characters of a VN, spoilers removed, most important first.
+  Future<List<VnCharacter>> getCharacters(String vnId) async {
+    final list = await _api.getCharacters(vnId);
+    list.sort((a, b) {
+      final r = a.role.index.compareTo(b.role.index);
+      return r != 0 ? r : a.name.compareTo(b.name);
+    });
+    return list;
+  }
 
   /// Tag name lookup for the filter sheet.
   Future<List<TagRef>> searchTags(String query) => _api.searchTags(query);

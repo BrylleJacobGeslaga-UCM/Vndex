@@ -6,11 +6,14 @@ import '../../core/widgets/add_to_list_sheet.dart';
 import '../../core/widgets/vn_cover.dart';
 import '../../models/vn.dart';
 import '../../providers/providers.dart';
+import 'widgets/character_section.dart';
 import 'widgets/description_section.dart';
 import 'widgets/progress_card.dart';
+import 'widgets/screenshot_section.dart';
 import 'widgets/tag_section.dart';
 
-/// Everything about one VN: header, your progress, description, tags.
+/// Everything about one VN: header, your progress, description,
+/// screenshots, characters, tags.
 ///
 /// Opens instantly using the [vn] you tapped (title, cover, etc.), then
 /// loads the description and tags from VNDB underneath.
@@ -70,6 +73,12 @@ class DetailScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 DescriptionSection(raw: d.description),
+                if (d.screenshots.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  ScreenshotSection(screenshots: d.screenshots),
+                ],
+                const SizedBox(height: 24),
+                CharacterSection(vnId: d.id),
                 const SizedBox(height: 24),
                 TagSection(vn: d),
               ],
