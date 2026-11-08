@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'library_prefs.dart';
+
+export 'library_prefs.dart';
+
 /// Color themes offered in Settings → Appearance.
 enum ThemePreset {
   vndex('Vndex'),
@@ -21,20 +25,6 @@ enum DateStyle {
   final String example;
 }
 
-/// How the home lists are ordered (sort button on the home screen).
-enum ListSort {
-  updated('Recently updated', Icons.update),
-  title('Title A–Z', Icons.sort_by_alpha),
-  score('Your score', Icons.star_outline),
-  rating('VNDB rating', Icons.trending_up),
-  added('Date added', Icons.playlist_add),
-  released('Release date', Icons.event);
-
-  const ListSort(this.label, this.icon);
-  final String label;
-  final IconData icon;
-}
-
 /// All user settings. Immutable: change with [copyWith].
 /// Defaults here are what a fresh install uses.
 class AppSettings {
@@ -45,7 +35,7 @@ class AppSettings {
     this.dateStyle = DateStyle.medium,
     this.blurSensitiveCovers = true,
     this.showSexualTags = false,
-    this.listSort = ListSort.updated,
+    this.library = const LibraryPrefs(),
   });
 
   final ThemeMode themeMode;
@@ -57,8 +47,8 @@ class AppSettings {
   final bool blurSensitiveCovers;
   final bool showSexualTags;
 
-  /// Same sort for all four lists; remembered between launches.
-  final ListSort listSort;
+  /// Home screen Filter · Sort · Display options.
+  final LibraryPrefs library;
 
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -67,7 +57,7 @@ class AppSettings {
     DateStyle? dateStyle,
     bool? blurSensitiveCovers,
     bool? showSexualTags,
-    ListSort? listSort,
+    LibraryPrefs? library,
   }) =>
       AppSettings(
         themeMode: themeMode ?? this.themeMode,
@@ -76,7 +66,7 @@ class AppSettings {
         dateStyle: dateStyle ?? this.dateStyle,
         blurSensitiveCovers: blurSensitiveCovers ?? this.blurSensitiveCovers,
         showSexualTags: showSexualTags ?? this.showSexualTags,
-        listSort: listSort ?? this.listSort,
+        library: library ?? this.library,
       );
 
   Map<String, Object?> toJson() => {
@@ -86,7 +76,7 @@ class AppSettings {
         'dateStyle': dateStyle.name,
         'blurSensitiveCovers': blurSensitiveCovers,
         'showSexualTags': showSexualTags,
-        'listSort': listSort.name,
+        'library': library.toJson(),
       };
 
   /// Unknown or missing values fall back to defaults, so adding a setting
@@ -104,7 +94,10 @@ class AppSettings {
       blurSensitiveCovers:
           j['blurSensitiveCovers'] as bool? ?? d.blurSensitiveCovers,
       showSexualTags: j['showSexualTags'] as bool? ?? d.showSexualTags,
-      listSort: pick(ListSort.values, j['listSort'], d.listSort),
+      library: j['library'] is Map
+          ? LibraryPrefs.fromJson((j['library'] as Map).cast<String, Object?>())
+          // Older saves only had the sort; keep it.
+          : LibraryPrefs(sort: pick(ListSort.values, j['listSort'], ListSort.updated)),
     );
   }
 }

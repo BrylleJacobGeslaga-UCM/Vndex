@@ -100,4 +100,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
     state = change(state);
     ref.read(settingsStoreProvider).save(state);
   }
+
+  /// Shortcut for the library sheet: change only the library options.
+  void updateLibrary(LibraryPrefs Function(LibraryPrefs current) change) =>
+      update((s) => s.copyWith(library: change(s.library)));
 }

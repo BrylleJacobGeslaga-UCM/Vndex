@@ -13,6 +13,7 @@ class VnResultTile extends StatelessWidget {
     this.onLongPress,
     this.trailing,
     this.footer,
+    this.showRating = true,
   });
 
   final Vn vn;
@@ -24,6 +25,9 @@ class VnResultTile extends StatelessWidget {
 
   /// Optional extra line under the info, e.g. your progress note.
   final Widget? footer;
+
+  /// Show the VNDB ★ rating line (can be turned off in the library sheet).
+  final bool showRating;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +69,7 @@ class VnResultTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   if (meta.isNotEmpty)
                     Text(meta, style: text.bodySmall?.copyWith(color: muted)),
-                  if (vn.ratingLabel != null)
+                  if (showRating && vn.ratingLabel != null)
                     Row(
                       children: [
                         const Icon(Icons.star, size: 14, color: Colors.amber),

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../models/app_settings.dart';
 import '../../models/vn_status.dart';
 import '../../providers/providers.dart';
 import '../browse/browse_screen.dart';
 import '../settings/settings_screen.dart';
+import 'widgets/library_sheet.dart';
 import 'widgets/status_list_view.dart';
 
-/// Main screen: one tab per status list, with a count on each tab.
-/// Top bar: search your lists, sort, settings.
+/// Main screen: All + one tab per list.
+/// Top bar: search your lists, Filter · Sort · Display sheet, settings.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -37,16 +37,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // First tab is "All" (null), then the four lists.
-    final tabs = <VnStatus?>[null, ...VnStatus.values];
+    final scheme = Theme.of(context).colorScheme;
     final counts = ref.watch(statusCountsProvider).maybeWhen(
           data: (c) => c,
           orElse: () => const <VnStatus, int>{},
         );
-    final sort = ref.watch(settingsProvider.select((s) => s.listSort));
+    final prefs = ref.watch(settingsProvider.select((s) => s.library));
     final total = counts.values.fold<int>(0, (a, b) => a + b);
 
+    // First tab is "All" (null), then the four lists.
+    // With tabs turned off, only "All" is shown.
+    final tabs = prefs.showTabs ? <VnStatus?>[null, ...VnStatus.values] : <VnStatus?>[null];
+
+    String tabLabel(String label, int? count) =>
+        prefs.showTabCounts && count != null ? '$label ($count)' : label;
+
     return DefaultTabController(
+      // Key forces a fresh controller when the number of tabs changes.
+      key: ValueKey(tabs.length),
       length: tabs.length,
       child: PopScope(
         // Back button closes the search box first.
@@ -74,7 +82,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onChanged: (q) =>
                         ref.read(librarySearchProvider.notifier).set(q),
                   )
-                : const Text('Vndex'),
+                : Row(
+                    children: [
+                      const Text('Vndex'),
+                      // With no tabs, the total goes next to the title instead.
+                      if (!prefs.showTabs && prefs.showTabCounts && counts.isNotEmpty) ...[
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text('$total', style: Theme.of(context).textTheme.titleMedium),
+                        ),
+                      ],
+                    ],
+                  ),
             actions: [
               if (!_searching)
                 IconButton(
@@ -82,27 +106,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: const Icon(Icons.search),
                   onPressed: _startSearch,
                 ),
-              PopupMenuButton<ListSort>(
-                tooltip: 'Sort',
-                icon: const Icon(Icons.sort),
-                initialValue: sort,
-                onSelected: (s) => ref
-                    .read(settingsProvider.notifier)
-                    .update((c) => c.copyWith(listSort: s)),
-                itemBuilder: (_) => [
-                  for (final s in ListSort.values)
-                    PopupMenuItem(
-                      value: s,
-                      child: Row(
-                        children: [
-                          Icon(s.icon, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text(s.label)),
-                          if (s == sort) const Icon(Icons.check, size: 18),
-                        ],
-                      ),
-                    ),
-                ],
+              IconButton(
+                tooltip: 'Filter, sort and display',
+                // Accent color when a filter is on, like Mihon.
+                icon: Icon(
+                  Icons.filter_list,
+                  color: prefs.hasActiveFilter ? scheme.primary : null,
+                ),
+                onPressed: () => showLibrarySheet(context),
               ),
               if (!_searching)
                 IconButton(
@@ -113,30 +124,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
             ],
-            bottom: TabBar(
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              tabs: [
-                for (final s in tabs)
-                  s == null
-                      ? Tab(
-                          icon: const Icon(Icons.collections_bookmark_outlined),
-                          text: counts.isEmpty ? 'All' : 'All ($total)',
-                        )
-                      : Tab(
-                          icon: Icon(s.icon),
-                          text: counts[s] == null
-                              ? s.label
-                              : '${s.label} (${counts[s]})',
-                        ),
-              ],
-            ),
+            bottom: prefs.showTabs
+                ? TabBar(
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: [
+                      for (final s in tabs)
+                        s == null
+                            ? Tab(
+                                icon: const Icon(Icons.collections_bookmark_outlined),
+                                text: tabLabel('All', counts.isEmpty ? null : total),
+                              )
+                            : Tab(icon: Icon(s.icon), text: tabLabel(s.label, counts[s])),
+                    ],
+                  )
+                : null,
           ),
-          body: TabBarView(
-            children: [
-              for (final s in tabs) StatusListView(status: s),
-            ],
-          ),
+          body: prefs.showTabs
+              ? TabBarView(
+                  children: [for (final s in tabs) StatusListView(status: s)],
+                )
+              : const StatusListView(status: null),
           floatingActionButton: FloatingActionButton.extended(
             icon: const Icon(Icons.explore_outlined),
             label: const Text('Browse'),
