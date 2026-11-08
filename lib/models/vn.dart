@@ -2,8 +2,16 @@ import 'dart:convert';
 
 /// One VNDB tag on a VN, e.g. "Time Travel" with a relevance of 2.6.
 class VnTag {
-  const VnTag({required this.name, required this.rating, required this.category});
+  const VnTag({
+    this.id,
+    required this.name,
+    required this.rating,
+    required this.category,
+  });
 
+  /// VNDB tag id, e.g. "g7". Needed to browse VNs with this tag.
+  /// Null only for tags saved before Step 7 (they refresh when online).
+  final String? id;
   final String name;
   final double rating; // 0–3, how strongly the tag applies
   final String category; // "cont" content, "tech" technical, "ero" sexual
@@ -11,9 +19,10 @@ class VnTag {
   bool get isSexual => category == 'ero';
 
   Map<String, Object?> toDb() =>
-      {'name': name, 'rating': rating, 'category': category};
+      {'id': id, 'name': name, 'rating': rating, 'category': category};
 
   factory VnTag.fromDb(Map<String, Object?> m) => VnTag(
+        id: m['id'] as String?,
         name: m['name'] as String,
         rating: (m['rating'] as num).toDouble(),
         category: m['category'] as String? ?? 'cont',
@@ -123,6 +132,7 @@ class Vn {
       for (final t in rawTags.cast<Map<String, dynamic>>())
         if ((t['spoiler'] as num? ?? 0) == 0 && t['lie'] != true)
           VnTag(
+            id: t['id'] as String?,
             name: t['name'] as String,
             rating: (t['rating'] as num).toDouble(),
             category: t['category'] as String? ?? 'cont',

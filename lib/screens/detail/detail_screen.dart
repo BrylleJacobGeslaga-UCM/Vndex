@@ -71,7 +71,7 @@ class DetailScreen extends ConsumerWidget {
               children: [
                 DescriptionSection(raw: d.description),
                 const SizedBox(height: 24),
-                TagSection(tags: d.tags),
+                TagSection(vn: d),
               ],
             ),
           ),

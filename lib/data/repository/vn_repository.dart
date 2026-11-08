@@ -1,5 +1,6 @@
 import 'package:sembast/sembast.dart';
 
+import '../../models/browse_filter.dart';
 import '../../models/user_entry.dart';
 import '../../models/vn.dart';
 import '../../models/vn_status.dart';
@@ -17,10 +18,23 @@ class VnRepository {
   Database get _store => _db.db;
   final _vns = AppDatabase.vnStore;
   final _entries = AppDatabase.entryStore;
+  final _saved = AppDatabase.savedSearchStore;
 
   // ---------- VNDB ----------
 
   Future<List<Vn>> search(String query) => _api.searchVn(query);
+
+  /// Browse VNDB with a filter. See [BrowseFilter.toVndbFilters].
+  Future<VnPage> browse({
+    required List<Object> filters,
+    required String sort,
+    required bool reverse,
+    int page = 1,
+  }) =>
+      _api.browse(filters: filters, sort: sort, reverse: reverse, page: page);
+
+  /// Tag name lookup for the filter sheet.
+  Future<List<TagRef>> searchTags(String query) => _api.searchTags(query);
 
   /// Full details (description, tags) for the detail screen.
   /// Fresh from VNDB when online; falls back to the saved copy when offline.
@@ -130,6 +144,27 @@ class VnRepository {
   Future<void> setNote(String vnId, String note) => _entries
       .record(vnId)
       .update(_store, {'progress_note': note.trim().isEmpty ? null : note});
+
+  // ---------- Saved searches ----------
+
+  Future<List<SavedSearch>> getSavedSearches() async {
+    final rows = await _saved.find(_store, finder: Finder(sortOrders: [SortOrder('name')]));
+    return [
+      for (final r in rows)
+        SavedSearch(
+          key: r.key,
+          name: r.value['name'] as String,
+          filter: BrowseFilter.fromJson(
+            r.value['filter'] as Map<String, Object?>,
+          ),
+        ),
+    ];
+  }
+
+  Future<void> saveSearch(String name, BrowseFilter filter) =>
+      _saved.add(_store, {'name': name, 'filter': filter.toJson()});
+
+  Future<void> deleteSavedSearch(int key) => _saved.record(key).delete(_store);
 
   /// Remove a VN from your lists completely (entry + cached info).
   Future<void> remove(String vnId) async {

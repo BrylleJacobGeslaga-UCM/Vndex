@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/vn.dart';
+import '../../../models/browse_filter.dart';
+import '../../browse/browse_screen.dart';
 
-/// Top VNDB tags as chips. Sexual-content tags are hidden behind a toggle.
+/// Top VNDB tags as tappable chips, plus "Find similar VNs".
+/// Sexual-content tags are hidden behind a toggle.
 class TagSection extends StatefulWidget {
-  const TagSection({super.key, required this.tags});
+  const TagSection({super.key, required this.vn});
 
-  final List<VnTag> tags;
+  final Vn vn;
 
   @override
   State<TagSection> createState() => _TagSectionState();
@@ -15,21 +18,76 @@ class TagSection extends StatefulWidget {
 class _TagSectionState extends State<TagSection> {
   bool _showSexual = false;
 
+  List<VnTag> get _browsable =>
+      [for (final t in widget.vn.tags) if (t.id != null) t];
+
+  /// Other tags of this VN (non-sexual), offered in the filter sheet.
+  List<TagRef> _suggestionsExcept(Iterable<VnTag> chosen) {
+    final ids = {for (final t in chosen) t.id};
+    return [
+      for (final t in _browsable)
+        if (!t.isSexual && !ids.contains(t.id)) TagRef.fromVnTag(t),
+    ];
+  }
+
+  void _openTag(VnTag tag) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => BrowseScreen(
+        title: 'Tag: ${tag.name}',
+        initialFilter: BrowseFilter(
+          sort: BrowseSort.rating,
+          includeTags: [TagRef.fromVnTag(tag)],
+        ),
+        suggestedTags: _suggestionsExcept([tag]),
+      ),
+    ));
+  }
+
+  void _openSimilar() {
+    // Start with the 3 most relevant non-sexual tags, and hide this VN.
+    final top = [for (final t in _browsable) if (!t.isSexual) t].take(3).toList();
+    if (top.isEmpty) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => BrowseScreen(
+        title: 'Similar to ${widget.vn.title}',
+        initialFilter: BrowseFilter(
+          sort: BrowseSort.rating,
+          includeTags: [for (final t in top) TagRef.fromVnTag(t)],
+          excludeVnId: widget.vn.id,
+        ),
+        suggestedTags: _suggestionsExcept(top),
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final hiddenCount = widget.tags.where((t) => t.isSexual).length;
+    final tags = widget.vn.tags;
+    final hiddenCount = tags.where((t) => t.isSexual).length;
     final visible = [
-      for (final t in widget.tags)
+      for (final t in tags)
         if (_showSexual || !t.isSexual) t,
     ];
+    final canFindSimilar = _browsable.any((t) => !t.isSexual);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tags', style: text.titleMedium),
+        Row(
+          children: [
+            Text('Tags', style: text.titleMedium),
+            const Spacer(),
+            if (canFindSimilar)
+              TextButton.icon(
+                icon: const Icon(Icons.auto_awesome, size: 18),
+                label: const Text('Find similar'),
+                onPressed: _openSimilar,
+              ),
+          ],
+        ),
         const SizedBox(height: 8),
-        if (widget.tags.isEmpty)
+        if (tags.isEmpty)
           Text(
             'No tags yet.',
             style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -40,9 +98,11 @@ class _TagSectionState extends State<TagSection> {
             runSpacing: 8,
             children: [
               for (final t in visible)
-                Chip(
+                ActionChip(
                   label: Text(t.name),
                   visualDensity: VisualDensity.compact,
+                  // Old saved tags without an id can't be browsed.
+                  onPressed: t.id == null ? null : () => _openTag(t),
                 ),
             ],
           ),

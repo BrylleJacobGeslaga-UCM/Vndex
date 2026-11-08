@@ -5,7 +5,7 @@ import '../../../core/widgets/add_to_list_sheet.dart';
 import '../../../models/vn_status.dart';
 import '../../../providers/providers.dart';
 import '../../detail/detail_screen.dart';
-import '../../search/widgets/vn_result_tile.dart';
+import '../../../core/widgets/vn_result_tile.dart';
 import 'empty_list.dart';
 
 /// The contents of one tab: your VNs in that status, newest change first.

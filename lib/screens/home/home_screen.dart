@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/vn_status.dart';
 import '../../providers/providers.dart';
-import '../search/search_screen.dart';
+import '../browse/browse_screen.dart';
 import 'widgets/status_list_view.dart';
 
 /// Main screen: one tab per status list, with a count on each tab.
@@ -41,10 +41,10 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
-          icon: const Icon(Icons.search),
-          label: const Text('Find a VN'),
+          icon: const Icon(Icons.explore_outlined),
+          label: const Text('Browse'),
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const SearchScreen()),
+            MaterialPageRoute(builder: (_) => const BrowseScreen()),
           ),
         ),
       ),

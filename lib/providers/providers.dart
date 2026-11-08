@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/local/app_database.dart';
 import '../data/remote/vndb_api.dart';
 import '../data/repository/vn_repository.dart';
+import '../models/browse_filter.dart';
 import '../models/user_entry.dart';
 import '../models/vn.dart';
 import '../models/vn_status.dart';
@@ -41,6 +42,11 @@ final userEntryProvider = FutureProvider.family<UserEntry?, String>(
 /// Full details of one VN (description, tags) for the detail screen.
 final vnDetailsProvider = FutureProvider.family<Vn, String>(
   (ref, vnId) => ref.watch(vnRepositoryProvider).getDetails(vnId),
+);
+
+/// Your saved Browse filters. Invalidate after saving or deleting one.
+final savedSearchesProvider = FutureProvider<List<SavedSearch>>(
+  (ref) => ref.watch(vnRepositoryProvider).getSavedSearches(),
 );
 
 /// Call after adding, moving or removing a VN so every screen reloads.

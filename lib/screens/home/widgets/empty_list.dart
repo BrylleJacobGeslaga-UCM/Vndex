@@ -26,7 +26,7 @@ class EmptyList extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Tap "Find a VN" to add one.',
+              'Tap "Browse" to find one.',
               style: TextStyle(color: color),
             ),
           ],

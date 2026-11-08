@@ -13,7 +13,7 @@ import 'db_factory.dart';
 ///  * `user_entry` key = VNDB id. YOUR data: status, dates, score, notes.
 ///
 /// They're separate so refreshing VNDB info never wipes your progress.
-/// Tags will be saved inside the `vn` record in Step 6.
+///  * `saved_search` your saved Browse filters (name + filter).
 class AppDatabase {
   AppDatabase._(this.db);
 
@@ -21,6 +21,9 @@ class AppDatabase {
 
   static final vnStore = stringMapStoreFactory.store('vn');
   static final entryStore = stringMapStoreFactory.store('user_entry');
+
+  /// Saved Browse filters. Auto-numbered keys.
+  static final savedSearchStore = intMapStoreFactory.store('saved_search');
 
   static Future<AppDatabase> open() async {
     final db = await openAppDatabase(AppConstants.dbName);

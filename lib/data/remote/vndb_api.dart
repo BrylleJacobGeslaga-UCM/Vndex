@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/constants.dart';
+import '../../models/browse_filter.dart';
 import '../../models/vn.dart';
 
 /// Thrown when a VNDB request fails, with a message safe to show the user.
@@ -12,6 +13,13 @@ class VndbException implements Exception {
 
   @override
   String toString() => message;
+}
+
+/// One page of results plus whether VNDB has more after it.
+class VnPage {
+  const VnPage(this.items, {required this.more});
+  final List<Vn> items;
+  final bool more;
 }
 
 /// Talks to the VNDB Kana API. Screens should not use this directly;
@@ -40,7 +48,7 @@ class VndbApi {
 
   /// Extra fields for the detail screen.
   static const String _detailFields =
-      '$_listFields, description, tags{name,rating,spoiler,lie,category}';
+      '$_listFields, description, tags{id,name,rating,spoiler,lie,category}';
 
   /// Fetch one VN with full details (description, tags) by id, e.g. "v17".
   /// Returns null if it doesn't exist.
@@ -51,6 +59,50 @@ class VndbApi {
     });
     final list = _parseResults(body);
     return list.isEmpty ? null : list.first;
+  }
+
+  /// Browse VNs with any VNDB filters (see BrowseFilter.toVndbFilters).
+  /// [sort]: votecount, rating, released, title or searchrank.
+  Future<VnPage> browse({
+    required List<Object> filters,
+    required String sort,
+    bool reverse = true,
+    int page = 1,
+    int results = 25,
+  }) async {
+    final body = await _post('/vn', {
+      // VNDB wants one filter; several are combined with "and".
+      'filters': filters.isEmpty
+          ? <Object>[]
+          : filters.length == 1
+              ? filters.first
+              : ['and', ...filters],
+      'fields': _listFields,
+      'sort': sort,
+      'reverse': reverse,
+      'results': results,
+      'page': page,
+    });
+    return VnPage(_parseResults(body), more: body['more'] as bool? ?? false);
+  }
+
+  /// Find tags by name, most used first. For the tag picker in Filter.
+  Future<List<TagRef>> searchTags(String query) async {
+    final body = await _post('/tag', {
+      'filters': ['search', '=', query],
+      'fields': 'name, category, vn_count',
+      'sort': 'vn_count',
+      'reverse': true,
+      'results': 15,
+    });
+    return [
+      for (final t in (body['results'] as List<dynamic>).cast<Map<String, dynamic>>())
+        TagRef(
+          id: t['id'] as String,
+          name: t['name'] as String,
+          category: t['category'] as String? ?? 'cont',
+        ),
+    ];
   }
 
   List<Vn> _parseResults(Map<String, dynamic> body) {
