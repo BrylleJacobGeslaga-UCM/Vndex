@@ -62,11 +62,10 @@ class LibraryPrefs {
     this.showScore = true,
     this.showStatus = true,
     this.showRating = true,
-    this.showNote = true,
     this.showTabs = true,
     this.showTabCounts = true,
     this.filterScored = TriState.any,
-    this.filterHasNote = TriState.any,
+    this.filterHasReview = TriState.any,
     this.filterReleased = TriState.any,
   });
 
@@ -77,16 +76,15 @@ class LibraryPrefs {
   // Display
   final LibraryDisplay display;
   final int gridColumns; // 2–6
-  final bool showScore; // ★ score badge
+  final bool showScore; // ★ rating badge
   final bool showStatus; // list badge in the "All" tab
   final bool showRating; // VNDB rating (list view)
-  final bool showNote; // progress note line (list view)
   final bool showTabs; // off = only "All", no tab bar
   final bool showTabCounts;
 
   // Filter
   final TriState filterScored;
-  final TriState filterHasNote;
+  final TriState filterHasReview;
   final TriState filterReleased;
 
   static const minColumns = 2;
@@ -98,7 +96,7 @@ class LibraryPrefs {
   /// Lights up the filter icon when any filter is on.
   bool get hasActiveFilter =>
       filterScored != TriState.any ||
-      filterHasNote != TriState.any ||
+      filterHasReview != TriState.any ||
       filterReleased != TriState.any;
 
   LibraryPrefs copyWith({
@@ -109,11 +107,10 @@ class LibraryPrefs {
     bool? showScore,
     bool? showStatus,
     bool? showRating,
-    bool? showNote,
     bool? showTabs,
     bool? showTabCounts,
     TriState? filterScored,
-    TriState? filterHasNote,
+    TriState? filterHasReview,
     TriState? filterReleased,
   }) =>
       LibraryPrefs(
@@ -124,11 +121,10 @@ class LibraryPrefs {
         showScore: showScore ?? this.showScore,
         showStatus: showStatus ?? this.showStatus,
         showRating: showRating ?? this.showRating,
-        showNote: showNote ?? this.showNote,
         showTabs: showTabs ?? this.showTabs,
         showTabCounts: showTabCounts ?? this.showTabCounts,
         filterScored: filterScored ?? this.filterScored,
-        filterHasNote: filterHasNote ?? this.filterHasNote,
+        filterHasReview: filterHasReview ?? this.filterHasReview,
         filterReleased: filterReleased ?? this.filterReleased,
       );
 
@@ -140,11 +136,10 @@ class LibraryPrefs {
         'showScore': showScore,
         'showStatus': showStatus,
         'showRating': showRating,
-        'showNote': showNote,
         'showTabs': showTabs,
         'showTabCounts': showTabCounts,
         'filterScored': filterScored.name,
-        'filterHasNote': filterHasNote.name,
+        'filterHasReview': filterHasReview.name,
         'filterReleased': filterReleased.name,
       };
 
@@ -163,11 +158,10 @@ class LibraryPrefs {
       showScore: j['showScore'] as bool? ?? d.showScore,
       showStatus: j['showStatus'] as bool? ?? d.showStatus,
       showRating: j['showRating'] as bool? ?? d.showRating,
-      showNote: j['showNote'] as bool? ?? d.showNote,
       showTabs: j['showTabs'] as bool? ?? d.showTabs,
       showTabCounts: j['showTabCounts'] as bool? ?? d.showTabCounts,
       filterScored: pick(TriState.values, j['filterScored'], d.filterScored),
-      filterHasNote: pick(TriState.values, j['filterHasNote'], d.filterHasNote),
+      filterHasReview: pick(TriState.values, j['filterHasReview'], d.filterHasReview),
       filterReleased: pick(TriState.values, j['filterReleased'], d.filterReleased),
     );
   }

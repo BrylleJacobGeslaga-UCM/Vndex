@@ -8,11 +8,11 @@ import '../../models/vn.dart';
 import '../../providers/providers.dart';
 import 'widgets/character_section.dart';
 import 'widgets/description_section.dart';
-import 'widgets/progress_card.dart';
+import 'widgets/rating_review_card.dart';
 import 'widgets/screenshot_section.dart';
 import 'widgets/tag_section.dart';
 
-/// Everything about one VN: header, your progress, description,
+/// Everything about one VN: header, your rating & review, description,
 /// screenshots, characters, tags.
 ///
 /// Opens instantly using the [vn] you tapped (title, cover, etc.), then
@@ -56,7 +56,7 @@ class DetailScreen extends ConsumerWidget {
 
           if (entry != null) ...[
             const SizedBox(height: 16),
-            ProgressCard(key: ValueKey(entry.vnId), entry: entry),
+            RatingReviewCard(key: ValueKey(entry.vnId), vn: shown, entry: entry),
           ],
 
           const SizedBox(height: 24),

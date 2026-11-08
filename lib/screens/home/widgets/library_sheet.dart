@@ -72,8 +72,8 @@ class _FilterTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
-        tri('Scored', p.filterScored, (v) => p.copyWith(filterScored: v)),
-        tri('Has progress note', p.filterHasNote, (v) => p.copyWith(filterHasNote: v)),
+        tri('Rated', p.filterScored, (v) => p.copyWith(filterScored: v)),
+        tri('Has review', p.filterHasReview, (v) => p.copyWith(filterHasReview: v)),
         tri('Released', p.filterReleased, (v) => p.copyWith(filterReleased: v)),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -90,7 +90,7 @@ class _FilterTab extends ConsumerWidget {
               child: TextButton(
                 onPressed: () => n.updateLibrary((c) => c.copyWith(
                       filterScored: TriState.any,
-                      filterHasNote: TriState.any,
+                      filterHasReview: TriState.any,
                       filterReleased: TriState.any,
                     )),
                 child: const Text('Clear filters'),
@@ -219,13 +219,10 @@ class _DisplayTab extends ConsumerWidget {
         ],
 
         heading('Overlay'),
-        check('Your score', p.showScore, (v) => p.copyWith(showScore: v)),
+        check('Your rating', p.showScore, (v) => p.copyWith(showScore: v)),
         check('List badge (All tab)', p.showStatus, (v) => p.copyWith(showStatus: v)),
         check('VNDB rating (list mode)', p.showRating,
             (v) => p.copyWith(showRating: v),
-            enabled: isList),
-        check('Progress note (list mode)', p.showNote,
-            (v) => p.copyWith(showNote: v),
             enabled: isList),
 
         heading('Tabs'),

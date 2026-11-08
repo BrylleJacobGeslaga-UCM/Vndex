@@ -47,3 +47,7 @@ String cleanVndbText(String raw) {
   s = s.replaceAll(RegExp(r'\n{3,}'), '\n\n');
   return s.trim();
 }
+
+/// Your 1–10 rating as stars out of 5: 8 → "4", 7 → "3.5".
+String formatStars(int score) =>
+    score.isEven ? '${score ~/ 2}' : (score / 2).toStringAsFixed(1);

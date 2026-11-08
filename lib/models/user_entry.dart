@@ -7,7 +7,9 @@ class UserEntry {
     required this.vnId,
     required this.status,
     this.score,
-    this.progressNote,
+    this.review,
+    this.reviewSpoiler = false,
+    this.reviewedAt,
     this.startedAt,
     this.finishedAt,
     required this.addedAt,
@@ -16,8 +18,13 @@ class UserEntry {
 
   final String vnId;
   final VnStatus status;
-  final int? score; // 1–10, set later from the detail screen
-  final String? progressNote;
+  /// Stored 1–10 (VNDB's scale); shown as 0.5–5 stars (each half star = 1).
+  final int? score;
+
+  /// Your review of the VN. [reviewSpoiler] hides it behind a tap.
+  final String? review;
+  final bool reviewSpoiler;
+  final DateTime? reviewedAt;
   final DateTime? startedAt;
   final DateTime? finishedAt;
   final DateTime addedAt;
@@ -33,7 +40,10 @@ class UserEntry {
       vnId: row['vn_id'] as String,
       status: VnStatus.fromDb(row['status'] as String),
       score: row['score'] as int?,
-      progressNote: row['progress_note'] as String?,
+      // Old progress notes (before reviews existed) carry over as reviews.
+      review: (row['review'] ?? row['progress_note']) as String?,
+      reviewSpoiler: row['review_spoiler'] as bool? ?? false,
+      reviewedAt: date('reviewed_at'),
       startedAt: date('started_at'),
       finishedAt: date('finished_at'),
       addedAt: date('added_at')!,

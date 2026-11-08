@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/format.dart';
 import '../../../core/widgets/sensitive_image.dart';
 import '../../../models/library_prefs.dart';
 import '../../../models/user_entry.dart';
@@ -126,7 +127,7 @@ class _GridTile extends StatelessWidget {
               child: _CornerBadge(
                 color: scheme.primary,
                 child: Text(
-                  '★${entry.entry.score}',
+                  '★${formatStars(entry.entry.score!)}',
                   style: TextStyle(
                     color: scheme.onPrimary,
                     fontWeight: FontWeight.w700,

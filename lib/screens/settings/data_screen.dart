@@ -80,13 +80,13 @@ class DataScreen extends ConsumerWidget {
           ListTile(
             leading: Icon(Icons.delete_forever_outlined, color: error),
             title: Text('Delete all data', style: TextStyle(color: error)),
-            subtitle: const Text('Your lists, scores, notes and saved searches'),
+            subtitle: const Text('Your lists, ratings, reviews and saved searches'),
             onTap: () async {
               if (!await _confirm(
                 context,
                 'Delete all data?',
-                'This removes all $total VNs from your lists, with their scores '
-                    'and notes, plus your saved searches. It cannot be undone. '
+                'This removes all $total VNs from your lists, with their ratings '
+                    'and reviews, plus your saved searches. It cannot be undone. '
                     'Settings are kept.',
               )) {
                 return;

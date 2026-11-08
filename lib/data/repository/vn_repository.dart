@@ -147,15 +147,21 @@ class VnRepository {
     });
   }
 
-  /// Your score, 1–10. Pass null to clear it.
+  /// Your rating, 1–10 (half stars). Pass null to clear it.
   /// Doesn't change `updated_at`, so editing doesn't reorder your lists.
   Future<void> setScore(String vnId, int? score) =>
       _entries.record(vnId).update(_store, {'score': score});
 
-  /// Free-text progress note, e.g. "Route 2, chapter 4".
-  Future<void> setNote(String vnId, String note) => _entries
-      .record(vnId)
-      .update(_store, {'progress_note': note.trim().isEmpty ? null : note});
+  /// Save your review. Empty text deletes it.
+  Future<void> setReview(String vnId, String text, {required bool spoiler}) {
+    final trimmed = text.trim();
+    return _entries.record(vnId).update(_store, {
+      'review': trimmed.isEmpty ? null : trimmed,
+      'review_spoiler': trimmed.isEmpty ? false : spoiler,
+      'reviewed_at': trimmed.isEmpty ? null : DateTime.now().millisecondsSinceEpoch,
+      'progress_note': null, // old field, replaced by review
+    });
+  }
 
   // ---------- Saved searches ----------
 

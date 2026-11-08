@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/utils/format.dart';
 import '../../../core/widgets/add_to_list_sheet.dart';
 import '../../../core/widgets/vn_result_tile.dart';
 import '../../../models/library_prefs.dart';
@@ -82,7 +83,6 @@ class StatusListView extends ConsumerWidget {
           itemBuilder: (context, i) {
             final e = entries[i];
             final score = prefs.showScore ? e.entry.score : null;
-            final note = prefs.showNote ? e.entry.progressNote : null;
 
             // "All" shows which list each VN is in, top right, above the score.
             final badges = [
@@ -104,7 +104,6 @@ class StatusListView extends ConsumerWidget {
                         ],
                       ],
                     ),
-              footer: note == null ? null : _NoteLine(note),
               onTap: () => openDetail(e),
               onLongPress: () => showAddToListSheet(context, e.vn),
             );
@@ -134,7 +133,7 @@ List<LibraryEntry> filterEntries(
               e.vn.title.toLowerCase().contains(query) ||
               (e.vn.altTitle?.toLowerCase().contains(query) ?? false)) &&
           prefs.filterScored.allows(e.entry.score != null) &&
-          prefs.filterHasNote.allows(e.entry.progressNote != null) &&
+          prefs.filterHasReview.allows(e.entry.review != null) &&
           prefs.filterReleased.allows(isReleased(e)))
         e,
   ];
@@ -210,7 +209,7 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-/// Your score as a small pill, e.g. "★ 8".
+/// Your rating as a small pill, in stars out of 5, e.g. "★ 4.5".
 class _ScoreBadge extends StatelessWidget {
   const _ScoreBadge(this.score);
 
@@ -231,7 +230,7 @@ class _ScoreBadge extends StatelessWidget {
           Icon(Icons.star, size: 14, color: scheme.onPrimaryContainer),
           const SizedBox(width: 2),
           Text(
-            '$score',
+            formatStars(score),
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: scheme.onPrimaryContainer,
@@ -239,35 +238,6 @@ class _ScoreBadge extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Your progress note, one line, under the VN info.
-class _NoteLine extends StatelessWidget {
-  const _NoteLine(this.note);
-
-  final String note;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(Icons.edit_note, size: 16, color: scheme.primary),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            note,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontStyle: FontStyle.italic,
-                  color: scheme.onSurfaceVariant,
-                ),
-          ),
-        ),
-      ],
     );
   }
 }
