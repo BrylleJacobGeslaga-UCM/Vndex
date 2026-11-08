@@ -45,10 +45,13 @@ Vndex keeps track of the visual novels you're playing, want to play, have finish
 
 ## Screenshots
 
-<!-- Add screenshots to docs/screenshots/ and list them here, e.g.: -->
-<!-- <img src="docs/screenshots/library.png" width="240"> <img src="docs/screenshots/browse.png" width="240"> <img src="docs/screenshots/detail.png" width="240"> -->
+| Library | Browse |
+|:---:|:---:|
+| <img src="docs/screenshots/library.png" width="260"> | <img src="docs/screenshots/browse.png" width="260"> |
 
-_Coming soon._
+| Filter | VN page |
+|:---:|:---:|
+| <img src="docs/screenshots/filter.png" width="260"> | <img src="docs/screenshots/detail.png" width="260"> |
 
 ## Install
 
