@@ -1,0 +1,5 @@
+package com.brylle.vndex
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
