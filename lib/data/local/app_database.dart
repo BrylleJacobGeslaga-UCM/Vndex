@@ -14,6 +14,7 @@ import 'db_factory.dart';
 ///
 /// They're separate so refreshing VNDB info never wipes your progress.
 ///  * `saved_search` your saved Browse filters (name + filter).
+///  * `settings`     theme, date format, 18+ options.
 class AppDatabase {
   AppDatabase._(this.db);
 
@@ -24,6 +25,9 @@ class AppDatabase {
 
   /// Saved Browse filters. Auto-numbered keys.
   static final savedSearchStore = intMapStoreFactory.store('saved_search');
+
+  /// App settings (one record, key "app").
+  static final settingsStore = stringMapStoreFactory.store('settings');
 
   static Future<AppDatabase> open() async {
     final db = await openAppDatabase(AppConstants.dbName);

@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/vn.dart';
 import '../../../models/browse_filter.dart';
+import '../../../providers/providers.dart';
 import '../../browse/browse_screen.dart';
 
 /// Top VNDB tags as tappable chips, plus "Find similar VNs".
-/// Sexual-content tags are hidden behind a toggle.
-class TagSection extends StatefulWidget {
+/// Sexual-content tags are hidden behind a toggle, unless Settings →
+/// Content says to always show them.
+class TagSection extends ConsumerStatefulWidget {
   const TagSection({super.key, required this.vn});
 
   final Vn vn;
 
   @override
-  State<TagSection> createState() => _TagSectionState();
+  ConsumerState<TagSection> createState() => _TagSectionState();
 }
 
-class _TagSectionState extends State<TagSection> {
+class _TagSectionState extends ConsumerState<TagSection> {
   bool _showSexual = false;
 
   List<VnTag> get _browsable =>
@@ -64,10 +67,12 @@ class _TagSectionState extends State<TagSection> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final tags = widget.vn.tags;
-    final hiddenCount = tags.where((t) => t.isSexual).length;
+    final alwaysShow = ref.watch(settingsProvider).showSexualTags;
+    final showSexual = alwaysShow || _showSexual;
+    final hiddenCount = alwaysShow ? 0 : tags.where((t) => t.isSexual).length;
     final visible = [
       for (final t in tags)
-        if (_showSexual || !t.isSexual) t,
+        if (showSexual || !t.isSexual) t,
     ];
     final canFindSimilar = _browsable.any((t) => !t.isSexual);
 

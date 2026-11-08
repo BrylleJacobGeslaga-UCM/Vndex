@@ -66,6 +66,7 @@ class _ProgressCardState extends ConsumerState<ProgressCard> {
     final text = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.outline;
     final score = _dragging ? _dragScore : entry.score;
+    final dateStyle = ref.watch(settingsProvider).dateStyle;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -134,11 +135,11 @@ class _ProgressCardState extends ConsumerState<ProgressCard> {
                 spacing: 16,
                 runSpacing: 4,
                 children: [
-                  Text('Added ${formatDate(entry.addedAt)}'),
+                  Text('Added ${formatDate(entry.addedAt, dateStyle)}'),
                   if (entry.startedAt != null)
-                    Text('Started ${formatDate(entry.startedAt!)}'),
+                    Text('Started ${formatDate(entry.startedAt!, dateStyle)}'),
                   if (entry.finishedAt != null)
-                    Text('Finished ${formatDate(entry.finishedAt!)}'),
+                    Text('Finished ${formatDate(entry.finishedAt!, dateStyle)}'),
                 ],
               ),
             ),

@@ -3,22 +3,25 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/vn.dart';
+import '../../providers/providers.dart';
 
-/// VN cover art. Sensitive covers are blurred until the user taps them.
+/// VN cover art. Sensitive covers are blurred until the user taps them,
+/// unless blurring is turned off in Settings → Content.
 /// Covers are cached on the device after the first load.
-class VnCover extends StatefulWidget {
+class VnCover extends ConsumerStatefulWidget {
   const VnCover({super.key, required this.vn, this.width = 64});
 
   final Vn vn;
   final double width;
 
   @override
-  State<VnCover> createState() => _VnCoverState();
+  ConsumerState<VnCover> createState() => _VnCoverState();
 }
 
-class _VnCoverState extends State<VnCover> {
+class _VnCoverState extends ConsumerState<VnCover> {
   bool _revealed = false;
 
   @override
@@ -55,7 +58,8 @@ class _VnCoverState extends State<VnCover> {
     }
 
     Widget cover = image;
-    if (widget.vn.isCoverSensitive && !_revealed) {
+    final blur = ref.watch(settingsProvider).blurSensitiveCovers;
+    if (blur && widget.vn.isCoverSensitive && !_revealed) {
       cover = GestureDetector(
         onTap: () => setState(() => _revealed = true),
         child: Stack(

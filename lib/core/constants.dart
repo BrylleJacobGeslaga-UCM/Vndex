@@ -2,6 +2,9 @@
 class AppConstants {
   AppConstants._();
 
+  /// Shown in Settings → About. Keep in sync with `version:` in pubspec.yaml.
+  static const String appVersion = '0.1.0';
+
   /// Live VNDB API (Kana).
   static const String vndbApiBase = 'https://api.vndb.org/kana';
 

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/local/app_database.dart';
+import '../data/local/settings_store.dart';
 import '../data/remote/vndb_api.dart';
 import '../data/repository/vn_repository.dart';
+import '../models/app_settings.dart';
 import '../models/browse_filter.dart';
 import '../models/user_entry.dart';
 import '../models/vn.dart';
@@ -44,6 +46,17 @@ final vnDetailsProvider = FutureProvider.family<Vn, String>(
   (ref, vnId) => ref.watch(vnRepositoryProvider).getDetails(vnId),
 );
 
+/// Text typed in the home screen's search box (filters all four lists).
+final librarySearchProvider =
+    NotifierProvider<LibrarySearch, String>(LibrarySearch.new);
+
+class LibrarySearch extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void set(String query) => state = query;
+}
+
 /// Your saved Browse filters. Invalidate after saving or deleting one.
 final savedSearchesProvider = FutureProvider<List<SavedSearch>>(
   (ref) => ref.watch(vnRepositoryProvider).getSavedSearches(),
@@ -54,4 +67,31 @@ void refreshLibrary(WidgetRef ref) {
   ref.invalidate(statusListProvider);
   ref.invalidate(statusCountsProvider);
   ref.invalidate(userEntryProvider);
+}
+
+// ---------- Settings ----------
+
+final settingsStoreProvider = Provider<SettingsStore>(
+  (ref) => SettingsStore(ref.watch(appDatabaseProvider)),
+);
+
+/// Settings loaded at startup. Real value is supplied in main.dart.
+final initialSettingsProvider = Provider<AppSettings>(
+  (ref) => throw UnimplementedError('Overridden in main()'),
+);
+
+/// Current settings. Watch it to react to changes; change with
+/// `ref.read(settingsProvider.notifier).update((s) => s.copyWith(...))`.
+final settingsProvider =
+    NotifierProvider<SettingsNotifier, AppSettings>(SettingsNotifier.new);
+
+class SettingsNotifier extends Notifier<AppSettings> {
+  @override
+  AppSettings build() => ref.read(initialSettingsProvider);
+
+  /// Applies a change right away and saves it in the background.
+  void update(AppSettings Function(AppSettings current) change) {
+    state = change(state);
+    ref.read(settingsStoreProvider).save(state);
+  }
 }

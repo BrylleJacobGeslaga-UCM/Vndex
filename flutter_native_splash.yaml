@@ -1,0 +1,25 @@
+# Splash screen config for flutter_native_splash.
+# After changing anything here, run:  dart run flutter_native_splash:create
+flutter_native_splash:
+  # Light mode: warm off-white with an orange logo
+  color: "#F7F2EC"
+  image: assets/splash/splash_logo.png
+  branding: assets/splash/branding.png
+
+  # Dark mode: navy with a light orange logo (matches the Dusk theme)
+  color_dark: "#1F202B"
+  image_dark: assets/splash/splash_logo_dark.png
+  branding_dark: assets/splash/branding_dark.png
+
+  # Android 12+ uses its own splash system (logo in a circle, name at the bottom)
+  android_12:
+    color: "#F7F2EC"
+    image: assets/splash/splash_logo.png
+    branding: assets/splash/branding.png
+    color_dark: "#1F202B"
+    image_dark: assets/splash/splash_logo_dark.png
+    branding_dark: assets/splash/branding_dark.png
+
+  android: true
+  ios: false
+  web: true

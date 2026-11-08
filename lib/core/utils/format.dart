@@ -1,12 +1,27 @@
 /// Small display helpers.
+library;
+
+import '../../models/app_settings.dart';
 
 const _months = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-/// "Nov 8, 2026"
-String formatDate(DateTime d) => '${_months[d.month - 1]} ${d.day}, ${d.year}';
+/// Formats a date in the style chosen in Settings → Appearance.
+String formatDate(DateTime d, [DateStyle style = DateStyle.medium]) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  switch (style) {
+    case DateStyle.medium:
+      return '${_months[d.month - 1]} ${d.day}, ${d.year}';
+    case DateStyle.dayFirst:
+      return '${d.day} ${_months[d.month - 1]} ${d.year}';
+    case DateStyle.numeric:
+      return '${d.month}/${d.day}/${two(d.year % 100)}';
+    case DateStyle.iso:
+      return '${d.year}-${two(d.month)}-${two(d.day)}';
+  }
+}
 
 /// 1500 → "~25 h", 45 → "~45 min"
 String formatLength(int minutes) =>

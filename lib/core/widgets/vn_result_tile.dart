@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'vn_cover.dart';
 import '../../models/vn.dart';
 
-/// One row in the search results.
+/// One VN row: cover, title, year · developer, rating.
+/// Used in Browse, the home lists and tag results.
 class VnResultTile extends StatelessWidget {
   const VnResultTile({
     super.key,
@@ -11,6 +12,7 @@ class VnResultTile extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.trailing,
+    this.footer,
   });
 
   final Vn vn;
@@ -19,6 +21,9 @@ class VnResultTile extends StatelessWidget {
 
   /// Optional widget on the right, e.g. a "Playing" badge.
   final Widget? trailing;
+
+  /// Optional extra line under the info, e.g. your progress note.
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +73,7 @@ class VnResultTile extends StatelessWidget {
                         Text(vn.ratingLabel!, style: text.bodySmall),
                       ],
                     ),
+                  if (footer != null) ...[const SizedBox(height: 4), footer!],
                 ],
               ),
             ),

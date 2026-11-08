@@ -166,6 +166,17 @@ class VnRepository {
 
   Future<void> deleteSavedSearch(int key) => _saved.record(key).delete(_store);
 
+  /// Delete all saved searches.
+  Future<void> clearSavedSearches() => _saved.delete(_store);
+
+  /// Delete your lists, cached VN info and saved searches.
+  /// Settings are kept.
+  Future<void> deleteAllData() => _store.transaction((txn) async {
+        await _entries.delete(txn);
+        await _vns.delete(txn);
+        await _saved.delete(txn);
+      });
+
   /// Remove a VN from your lists completely (entry + cached info).
   Future<void> remove(String vnId) async {
     await _store.transaction((txn) async {
