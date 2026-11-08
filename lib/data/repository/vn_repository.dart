@@ -69,12 +69,13 @@ class VnRepository {
 
   // ---------- Your lists ----------
 
-  /// All VNs in one list, most recently changed first.
-  Future<List<LibraryEntry>> getList(VnStatus status) async {
+  /// VNs in one list, most recently changed first.
+  /// [status] null = every list combined (the "All" tab).
+  Future<List<LibraryEntry>> getList(VnStatus? status) async {
     final entries = await _entries.find(
       _store,
       finder: Finder(
-        filter: Filter.equals('status', status.dbValue),
+        filter: status == null ? null : Filter.equals('status', status.dbValue),
         sortOrders: [SortOrder('updated_at', false)], // false = newest first
       ),
     );

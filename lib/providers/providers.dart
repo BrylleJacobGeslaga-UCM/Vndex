@@ -26,9 +26,9 @@ final vnRepositoryProvider = Provider<VnRepository>(
   ),
 );
 
-/// The VNs in one status list.
+/// The VNs in one status list. null = all lists combined ("All" tab).
 final statusListProvider =
-    FutureProvider.family<List<LibraryEntry>, VnStatus>(
+    FutureProvider.family<List<LibraryEntry>, VnStatus?>(
   (ref, status) => ref.watch(vnRepositoryProvider).getList(status),
 );
 

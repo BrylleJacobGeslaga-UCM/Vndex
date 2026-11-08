@@ -19,6 +19,14 @@ enum VnStatus {
   final IconData icon;
   final int vndbLabelId;
 
+  /// Badge color in the "All" tab.
+  Color get color => switch (this) {
+        VnStatus.playing => const Color(0xFF4F8EF7), // blue
+        VnStatus.toPlay => const Color(0xFFE0A33A), // amber
+        VnStatus.finished => const Color(0xFF4CAF6A), // green
+        VnStatus.dropped => const Color(0xFFE5534B), // red
+      };
+
   static VnStatus fromDb(String value) =>
       VnStatus.values.firstWhere((s) => s.dbValue == value);
 }

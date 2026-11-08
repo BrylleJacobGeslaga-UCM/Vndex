@@ -10,13 +10,15 @@ import '../../../providers/providers.dart';
 import '../../detail/detail_screen.dart';
 import 'empty_list.dart';
 
-/// The contents of one tab: your VNs in that status, sorted and filtered
-/// by the home screen's sort button and search box.
+/// The contents of one tab: your VNs in that status (or every status when
+/// [status] is null — the "All" tab), sorted and filtered by the home
+/// screen's sort button and search box.
 /// Tap a VN for details; long-press to quickly move or remove it.
 class StatusListView extends ConsumerWidget {
   const StatusListView({super.key, required this.status});
 
-  final VnStatus status;
+  /// null = All.
+  final VnStatus? status;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,7 +41,7 @@ class StatusListView extends ConsumerWidget {
         if (entries.isEmpty) {
           return Center(
             child: Text(
-              'No matches for "$query" in ${status.label}',
+              'No matches for "$query" in ${status?.label ?? 'All'}',
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
             ),
           );
@@ -53,9 +55,25 @@ class StatusListView extends ConsumerWidget {
           itemBuilder: (context, i) {
             final e = entries[i];
             final note = e.entry.progressNote;
+            final score = e.entry.score;
+            // "All" shows which list each VN is in, top right, above the score.
+            final Widget? trailing = status == null
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _StatusBadge(e.entry.status),
+                      if (score != null) ...[
+                        const SizedBox(height: 6),
+                        _ScoreBadge(score),
+                      ],
+                    ],
+                  )
+                : score == null
+                    ? null
+                    : _ScoreBadge(score);
             return VnResultTile(
               vn: e.vn,
-              trailing: e.entry.score == null ? null : _ScoreBadge(e.entry.score!),
+              trailing: trailing,
               footer: note == null ? null : _NoteLine(note),
               onTap: () => Navigator.of(context)
                   .push(MaterialPageRoute(builder: (_) => DetailScreen(vn: e.vn)))
@@ -113,6 +131,37 @@ List<LibraryEntry> sortEntries(List<LibraryEntry> entries, ListSort sort) {
   }
 
   return [...entries]..sort(compare);
+}
+
+/// Which list a VN is in, as a colored pill (used in the "All" tab).
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge(this.status);
+
+  final VnStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = status.color;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: c.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(status.icon, size: 14, color: c),
+          const SizedBox(width: 4),
+          Text(
+            status.label,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Your score as a small pill, e.g. "★ 8".

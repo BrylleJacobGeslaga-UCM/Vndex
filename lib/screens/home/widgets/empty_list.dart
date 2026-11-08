@@ -6,7 +6,8 @@ import '../../../models/vn_status.dart';
 class EmptyList extends StatelessWidget {
   const EmptyList({super.key, required this.status});
 
-  final VnStatus status;
+  /// null = the "All" tab.
+  final VnStatus? status;
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +19,13 @@ class EmptyList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(status.icon, size: 64, color: color),
+            Icon(status?.icon ?? Icons.collections_bookmark_outlined,
+                size: 64, color: color),
             const SizedBox(height: 16),
             Text(
-              'Nothing in ${status.label} yet',
+              status == null
+                  ? 'Your library is empty'
+                  : 'Nothing in ${status!.label} yet',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),

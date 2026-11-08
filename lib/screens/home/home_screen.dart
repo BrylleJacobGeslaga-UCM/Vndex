@@ -37,15 +37,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const statuses = VnStatus.values;
+    // First tab is "All" (null), then the four lists.
+    final tabs = <VnStatus?>[null, ...VnStatus.values];
     final counts = ref.watch(statusCountsProvider).maybeWhen(
           data: (c) => c,
           orElse: () => const <VnStatus, int>{},
         );
     final sort = ref.watch(settingsProvider.select((s) => s.listSort));
+    final total = counts.values.fold<int>(0, (a, b) => a + b);
 
     return DefaultTabController(
-      length: statuses.length,
+      length: tabs.length,
       child: PopScope(
         // Back button closes the search box first.
         canPop: !_searching,
@@ -115,17 +117,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               isScrollable: true,
               tabAlignment: TabAlignment.start,
               tabs: [
-                for (final s in statuses)
-                  Tab(
-                    icon: Icon(s.icon),
-                    text: counts[s] == null ? s.label : '${s.label} (${counts[s]})',
-                  ),
+                for (final s in tabs)
+                  s == null
+                      ? Tab(
+                          icon: const Icon(Icons.collections_bookmark_outlined),
+                          text: counts.isEmpty ? 'All' : 'All ($total)',
+                        )
+                      : Tab(
+                          icon: Icon(s.icon),
+                          text: counts[s] == null
+                              ? s.label
+                              : '${s.label} (${counts[s]})',
+                        ),
               ],
             ),
           ),
           body: TabBarView(
             children: [
-              for (final s in statuses) StatusListView(status: s),
+              for (final s in tabs) StatusListView(status: s),
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
