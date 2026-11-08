@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/vn_status.dart';
+import '../../providers/providers.dart';
 import '../search/search_screen.dart';
-import 'widgets/empty_list.dart';
+import 'widgets/status_list_view.dart';
 
-/// Main screen: one tab per status list.
-class HomeScreen extends StatelessWidget {
+/// Main screen: one tab per status list, with a count on each tab.
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const statuses = VnStatus.values;
+    final counts = ref.watch(statusCountsProvider).maybeWhen(
+          data: (c) => c,
+          orElse: () => const <VnStatus, int>{},
+        );
 
     return DefaultTabController(
       length: statuses.length,
@@ -21,14 +27,17 @@ class HomeScreen extends StatelessWidget {
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             tabs: [
-              for (final s in statuses) Tab(icon: Icon(s.icon), text: s.label),
+              for (final s in statuses)
+                Tab(
+                  icon: Icon(s.icon),
+                  text: counts[s] == null ? s.label : '${s.label} (${counts[s]})',
+                ),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            // Step 5 replaces these with real lists from the local database.
-            for (final s in statuses) EmptyList(status: s),
+            for (final s in statuses) StatusListView(status: s),
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(

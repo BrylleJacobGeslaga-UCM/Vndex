@@ -38,11 +38,16 @@ class VndbApi {
     return _parseResults(body);
   }
 
-  /// Fetch one VN by id, e.g. "v17". Returns null if it doesn't exist.
-  Future<Vn?> getVn(String id) async {
+  /// Extra fields for the detail screen.
+  static const String _detailFields =
+      '$_listFields, description, tags{name,rating,spoiler,lie,category}';
+
+  /// Fetch one VN with full details (description, tags) by id, e.g. "v17".
+  /// Returns null if it doesn't exist.
+  Future<Vn?> getVnDetails(String id) async {
     final body = await _post('/vn', {
       'filters': ['id', '=', id],
-      'fields': _listFields,
+      'fields': _detailFields,
     });
     final list = _parseResults(body);
     return list.isEmpty ? null : list.first;

@@ -180,10 +180,10 @@ packages:
     dependency: transitive
     description:
       name: hooks
-      sha256: "9a62a50b50b769a737bc0a8ff381f333529df3ab746b2f6b02e83760231455ba"
+      sha256: eaac480a35ec0814146c2c48d96aaa829e0e44a7662c88ae84c9edf4bc35651f
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.2"
+    version: "2.2.0"
   http:
     dependency: "direct main"
     description:
@@ -200,6 +200,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  idb_shim:
+    dependency: transitive
+    description:
+      name: idb_shim
+      sha256: "60965b556624f7018ec26205283e32670bc78c6fe1388d4b90bdfe6b2311b87b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.11.2"
   intl:
     dependency: transitive
     description:
@@ -308,10 +316,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: c82594181e3312f3d0695fc95aaaf7758d75b8d4ae2bbecf223b9fd5109a059d
+      sha256: "307249ce4ff29d58a18e97f6345f539382eb9c9c29ecda628900f31de0443dd9"
       url: "https://pub.dev"
     source: hosted
-    version: "1.18.3"
+    version: "1.19.0"
   objective_c:
     dependency: transitive
     description:
@@ -345,7 +353,7 @@ packages:
     source: hosted
     version: "1.9.1"
   path_provider:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: a7f4874f987173da295a61c181b8ee71dab59b332a486b391babf26a1b884825
@@ -420,10 +428,10 @@ packages:
     dependency: transitive
     description:
       name: record_use
-      sha256: "2551bd8eecfe95d14ae75f6021ad0248be5c27f138c2ec12fcb52b500b3ba1ed"
+      sha256: "1cb8564af8d43b464294411db9217f5ec04891c6f22ee2c32d73ae05e88a6bd2"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.0"
+    version: "1.1.1"
   riverpod:
     dependency: transitive
     description:
@@ -440,6 +448,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.28.0"
+  sembast:
+    dependency: "direct main"
+    description:
+      name: sembast
+      sha256: "35775a26edbdf0d891bab304929a712e103c9d9a6e2fb5ebbd8437bb3139615a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.10.0"
+  sembast_web:
+    dependency: "direct main"
+    description:
+      name: sembast_web
+      sha256: "99dad5c3610c7b9559add7f394ab272ccb76a595a28dc94bc40d05c45481c7bf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.6+1"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -454,7 +478,7 @@ packages:
     source: hosted
     version: "1.10.2"
   sqflite:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: sqflite
       sha256: "21a9750de2deb464946e9f41c7ddf176e25553618afdfc774868cd454990c06a"

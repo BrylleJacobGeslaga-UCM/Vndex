@@ -1,2 +1,141 @@
-// Step 5: decides whether data comes from the local cache or the VNDB API.
-// Screens talk to this, never to the API or database directly.
+import 'package:sembast/sembast.dart';
+
+import '../../models/user_entry.dart';
+import '../../models/vn.dart';
+import '../../models/vn_status.dart';
+import '../local/app_database.dart';
+import '../remote/vndb_api.dart';
+
+/// The only thing screens talk to for VN data.
+/// Search goes to VNDB; your lists live in the local database.
+class VnRepository {
+  VnRepository(this._db, this._api);
+
+  final AppDatabase _db;
+  final VndbApi _api;
+
+  Database get _store => _db.db;
+  final _vns = AppDatabase.vnStore;
+  final _entries = AppDatabase.entryStore;
+
+  // ---------- VNDB ----------
+
+  Future<List<Vn>> search(String query) => _api.searchVn(query);
+
+  /// Full details (description, tags) for the detail screen.
+  /// Fresh from VNDB when online; falls back to the saved copy when offline.
+  /// If the VN is in your lists, the fresh details are saved for next time.
+  Future<Vn> getDetails(String id) async {
+    try {
+      final vn = await _api.getVnDetails(id);
+      if (vn == null) throw const VndbException('This VN no longer exists on VNDB.');
+
+      if (await _entries.record(id).exists(_store)) {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await _vns.record(id).put(_store, vn.toDb(fetchedAt: now), merge: true);
+      }
+      return vn;
+    } on VndbException {
+      final cached = await _vns.record(id).get(_store);
+      if (cached != null) return Vn.fromDb(cached);
+      rethrow;
+    }
+  }
+
+  // ---------- Your lists ----------
+
+  /// All VNs in one list, most recently changed first.
+  Future<List<LibraryEntry>> getList(VnStatus status) async {
+    final entries = await _entries.find(
+      _store,
+      finder: Finder(
+        filter: Filter.equals('status', status.dbValue),
+        sortOrders: [SortOrder('updated_at', false)], // false = newest first
+      ),
+    );
+
+    // Fetch the matching VN records in one go.
+    final vnRows = await _vns.records(entries.map((e) => e.key)).get(_store);
+
+    return [
+      for (var i = 0; i < entries.length; i++)
+        if (vnRows[i] != null)
+          LibraryEntry(
+            vn: Vn.fromDb(vnRows[i]!),
+            entry: UserEntry.fromDb(entries[i].value),
+          ),
+    ];
+  }
+
+  /// How many VNs are in each list (for the tab labels).
+  Future<Map<VnStatus, int>> getCounts() async {
+    return {
+      for (final s in VnStatus.values)
+        s: await _entries.count(
+          _store,
+          filter: Filter.equals('status', s.dbValue),
+        ),
+    };
+  }
+
+  /// Your entry for a VN, or null if it's not in any list.
+  Future<UserEntry?> getEntry(String vnId) async {
+    final row = await _entries.record(vnId).get(_store);
+    return row == null ? null : UserEntry.fromDb(row);
+  }
+
+  /// Add a VN to a list, or move it to another list.
+  /// Also caches the VN's info locally so the lists work offline.
+  Future<void> setStatus(Vn vn, VnStatus status) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    await _store.transaction((txn) async {
+      // merge: true keeps fields we don't send (e.g. a description fetched
+      // later on the detail screen).
+      await _vns.record(vn.id).put(txn, vn.toDb(fetchedAt: now), merge: true);
+
+      final entryRef = _entries.record(vn.id);
+      final existing = await entryRef.get(txn);
+
+      if (existing == null) {
+        await entryRef.put(txn, {
+          'vn_id': vn.id,
+          'status': status.dbValue,
+          'started_at': status == VnStatus.playing ? now : null,
+          'finished_at': status == VnStatus.finished ? now : null,
+          'added_at': now,
+          'updated_at': now,
+        });
+      } else {
+        final old = UserEntry.fromDb(existing);
+        await entryRef.update(txn, {
+          'status': status.dbValue,
+          'updated_at': now,
+          // Only stamp dates the first time; keep the original otherwise.
+          if (status == VnStatus.playing && old.startedAt == null)
+            'started_at': now,
+          if (status == VnStatus.finished && old.finishedAt == null)
+            'finished_at': now,
+        });
+      }
+    });
+  }
+
+  /// Your score, 1–10. Pass null to clear it.
+  /// Doesn't change `updated_at`, so editing doesn't reorder your lists.
+  Future<void> setScore(String vnId, int? score) =>
+      _entries.record(vnId).update(_store, {'score': score});
+
+  /// Free-text progress note, e.g. "Route 2, chapter 4".
+  Future<void> setNote(String vnId, String note) => _entries
+      .record(vnId)
+      .update(_store, {'progress_note': note.trim().isEmpty ? null : note});
+
+  /// Remove a VN from your lists completely (entry + cached info).
+  Future<void> remove(String vnId) async {
+    await _store.transaction((txn) async {
+      await _entries.record(vnId).delete(txn);
+      await _vns.record(vnId).delete(txn);
+    });
+  }
+}

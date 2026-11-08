@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
+import '../../core/widgets/add_to_list_sheet.dart';
 import '../../data/remote/vndb_api.dart';
 import '../../models/vn.dart';
 import '../../providers/providers.dart';
+import '../detail/detail_screen.dart';
 import 'widgets/vn_result_tile.dart';
 
 /// Search VNDB by title. Waits for the user to stop typing before calling
@@ -63,7 +65,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
 
     try {
-      final results = await ref.read(vndbApiProvider).searchVn(query);
+      final results = await ref.read(vnRepositoryProvider).search(query);
       if (!mounted || id != _requestId) return;
       setState(() {
         _results = results;
@@ -137,14 +139,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         final vn = _results[i];
         return VnResultTile(
           vn: vn,
-          onTap: () {
-            // Step 5: open a sheet to add this VN to one of the four lists.
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(
-                content: Text('${vn.title} (${vn.id}) — adding comes next step'),
-              ));
-          },
+          trailing: _ListBadge(vnId: vn.id),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => DetailScreen(vn: vn)),
+          ),
+          onLongPress: () => showAddToListSheet(context, vn),
         );
       },
     );
@@ -173,6 +172,42 @@ class _Message extends StatelessWidget {
             if (action != null) ...[const SizedBox(height: 8), action!],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Small chip showing which list a VN is already in (nothing if none).
+class _ListBadge extends ConsumerWidget {
+  const _ListBadge({required this.vnId});
+
+  final String vnId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(userEntryProvider(vnId)).maybeWhen(
+          data: (entry) => entry?.status,
+          orElse: () => null,
+        );
+    if (status == null) return const SizedBox.shrink();
+
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(status.icon, size: 14, color: scheme.onSecondaryContainer),
+          const SizedBox(width: 4),
+          Text(
+            status.label,
+            style: TextStyle(fontSize: 12, color: scheme.onSecondaryContainer),
+          ),
+        ],
       ),
     );
   }

@@ -5,10 +5,20 @@ import '../../../models/vn.dart';
 
 /// One row in the search results.
 class VnResultTile extends StatelessWidget {
-  const VnResultTile({super.key, required this.vn, this.onTap});
+  const VnResultTile({
+    super.key,
+    required this.vn,
+    this.onTap,
+    this.onLongPress,
+    this.trailing,
+  });
 
   final Vn vn;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  /// Optional widget on the right, e.g. a "Playing" badge.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +32,7 @@ class VnResultTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -60,6 +71,7 @@ class VnResultTile extends StatelessWidget {
                 ],
               ),
             ),
+            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
           ],
         ),
       ),
