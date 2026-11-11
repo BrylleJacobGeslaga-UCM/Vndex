@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import '../../core/constants.dart';
 import '../../models/browse_filter.dart';
 import '../../models/character.dart';
+import '../../models/english.dart';
+import '../../models/quote.dart';
 import '../../models/vn.dart';
 
 /// Thrown when a VNDB request fails, with a message safe to show the user.
@@ -52,7 +54,8 @@ class VndbApi {
       '$_listFields, description, tags{id,name,rating,spoiler,lie,category}, '
       'screenshots{url,thumbnail,sexual,violence}, '
       'relations{id,title,released,relation,relation_official,'
-      'image{url,sexual,violence}}';
+      'image{url,sexual,violence}}, '
+      'staff{id,name,original,role}';
 
   /// Fetch one VN with full details (description, tags) by id, e.g. "v17".
   /// Returns null if it doesn't exist.
@@ -121,6 +124,38 @@ class VndbApi {
     return [
       for (final c in (body['results'] as List<dynamic>).cast<Map<String, dynamic>>())
         if (VnCharacter.fromJson(c, vnId) case final ch?) ch,
+    ];
+  }
+
+  /// English releases of one VN, to work out whether it's playable in English.
+  Future<EnglishAvailability> getEnglishAvailability(String vnId) async {
+    final body = await _post('/release', {
+      'filters': [
+        'and',
+        ['vn', '=', ['id', '=', vnId]],
+        ['lang', '=', 'en'],
+      ],
+      'fields': 'official, released, languages{lang,mtl}',
+      'results': 100,
+    });
+    return EnglishAvailability.fromReleases(
+      (body['results'] as List<dynamic>).cast<Map<String, dynamic>>(),
+    );
+  }
+
+  /// Quotes from one VN, best-voted first (up to 100).
+  Future<List<VnQuote>> getQuotes(String vnId) async {
+    final body = await _post('/quote', {
+      'filters': ['vn', '=', ['id', '=', vnId]],
+      'fields': 'quote, score, '
+          'character{name,original,image{url,sexual,violence},vns{id,spoiler}}',
+      'sort': 'score',
+      'reverse': true,
+      'results': 100,
+    });
+    return [
+      for (final q in (body['results'] as List<dynamic>).cast<Map<String, dynamic>>())
+        VnQuote.fromJson(q, vnId),
     ];
   }
 

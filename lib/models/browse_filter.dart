@@ -98,6 +98,8 @@ class BrowseFilter {
     this.excludeTags = const [],
     this.excludeVnId,
     this.developer,
+    this.staff,
+    this.englishOnly = false,
   });
 
   final BrowseSort sort;
@@ -116,6 +118,12 @@ class BrowseFilter {
   /// Only VNs by this developer (set by tapping a studio on a VN page).
   final VnDeveloper? developer;
 
+  /// Only VNs this person worked on (set by tapping a staff name).
+  final StaffRef? staff;
+
+  /// Only VNs with an English release (official or fan translation).
+  final bool englishOnly;
+
   /// The "Popular" chip.
   static const popular = BrowseFilter();
 
@@ -132,7 +140,9 @@ class BrowseFilter {
       (yearFrom != null || yearTo != null ? 1 : 0) +
       includeTags.length +
       excludeTags.length +
-      (developer != null ? 1 : 0);
+      (developer != null ? 1 : 0) +
+      (staff != null ? 1 : 0) +
+      (englishOnly ? 1 : 0);
 
   BrowseFilter copyWith({
     BrowseSort? sort,
@@ -147,6 +157,8 @@ class BrowseFilter {
     List<TagRef>? includeTags,
     List<TagRef>? excludeTags,
     VnDeveloper? Function()? developer, // wrapped so it can be set to null
+    StaffRef? Function()? staff,
+    bool? englishOnly,
   }) =>
       BrowseFilter(
         sort: sort ?? this.sort,
@@ -162,6 +174,8 @@ class BrowseFilter {
         excludeTags: excludeTags ?? this.excludeTags,
         excludeVnId: excludeVnId,
         developer: developer != null ? developer() : this.developer,
+        staff: staff != null ? staff() : this.staff,
+        englishOnly: englishOnly ?? this.englishOnly,
       );
 
   /// Turns the filter into VNDB's filter format.
@@ -188,6 +202,8 @@ class BrowseFilter {
       for (final t in excludeTags) ['tag', '!=', [t.id, 0, 1]],
       if (excludeVnId != null) ['id', '!=', excludeVnId!],
       if (developer?.id != null) ['developer', '=', ['id', '=', developer!.id!]],
+      if (staff != null) ['staff', '=', ['id', '=', staff!.id]],
+      if (englishOnly) ['lang', '=', 'en'],
     ];
   }
 
@@ -206,6 +222,8 @@ class BrowseFilter {
         'includeTags': [for (final t in includeTags) t.toJson()],
         'excludeTags': [for (final t in excludeTags) t.toJson()],
         if (developer != null) 'developer': developer!.toJson(),
+        if (staff != null) 'staff': staff!.toJson(),
+        'englishOnly': englishOnly,
       };
 
   factory BrowseFilter.fromJson(Map<String, Object?> j) {
@@ -230,6 +248,10 @@ class BrowseFilter {
       includeTags: tags('includeTags'),
       excludeTags: tags('excludeTags'),
       developer: j['developer'] == null ? null : VnDeveloper.fromStored(j['developer']),
+      staff: j['staff'] is Map
+          ? StaffRef.fromJson((j['staff'] as Map).cast<String, Object?>())
+          : null,
+      englishOnly: j['englishOnly'] as bool? ?? false,
     );
   }
 }

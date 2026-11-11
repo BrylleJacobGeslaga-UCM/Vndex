@@ -4,10 +4,11 @@ import '../../../models/vn_status.dart';
 
 /// Shown when a status list has no entries yet.
 class EmptyList extends StatelessWidget {
-  const EmptyList({super.key, required this.status});
+  const EmptyList({super.key, required this.status, this.collectionName});
 
-  /// null = the "All" tab.
+  /// null = the "All" tab (or a collection, when [collectionName] is set).
   final VnStatus? status;
+  final String? collectionName;
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +20,28 @@ class EmptyList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(status?.icon ?? Icons.collections_bookmark_outlined,
-                size: 64, color: color),
+            Icon(
+              collectionName != null
+                  ? Icons.folder_open_outlined
+                  : status?.icon ?? Icons.collections_bookmark_outlined,
+              size: 64,
+              color: color,
+            ),
             const SizedBox(height: 16),
             Text(
-              status == null
-                  ? 'Your library is empty'
-                  : 'Nothing in ${status!.label} yet',
+              collectionName != null
+                  ? 'Nothing in $collectionName yet'
+                  : status == null
+                      ? 'Your library is empty'
+                      : 'Nothing in ${status!.label} yet',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              'Tap "Browse" to find one.',
+              collectionName != null
+                  ? 'Long-press a VN in your lists → Collections…'
+                  : 'Tap "Browse" to find one.',
+              textAlign: TextAlign.center,
               style: TextStyle(color: color),
             ),
           ],

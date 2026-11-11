@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/vn.dart';
 import '../../models/vn_status.dart';
 import '../../providers/providers.dart';
+import 'collection_picker_sheet.dart';
 import 'vn_cover.dart';
 
 /// Opens the "add / move / remove" sheet for a VN.
@@ -21,6 +22,39 @@ class AddToListSheet extends ConsumerWidget {
   const AddToListSheet({super.key, required this.vn});
 
   final Vn vn;
+
+  /// Removes the VN, then offers "Undo" for a few seconds.
+  Future<void> _removeWithUndo(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    // The sheet (and its ref) is gone by the time Undo is tapped,
+    // so keep the app-wide container instead.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final repo = ref.read(vnRepositoryProvider);
+
+    try {
+      final removed = await repo.remove(vn.id);
+      refreshLibrary(ref);
+      navigator.pop();
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text('Removed ${vn.title}'),
+          duration: const Duration(seconds: 6),
+          action: removed == null
+              ? null
+              : SnackBarAction(
+                  label: 'Undo',
+                  onPressed: () async {
+                    await repo.undoRemove(removed);
+                    refreshLibraryIn(container);
+                  },
+                ),
+        ));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Could not remove: $e')));
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,10 +124,21 @@ class AddToListSheet extends ConsumerWidget {
             if (current != null) ...[
               const Divider(),
               ListTile(
+                leading: const Icon(Icons.collections_bookmark_outlined),
+                title: const Text('Collections…'),
+                onTap: () {
+                  // This sheet's context dies when it closes; open the
+                  // picker from the navigator, which stays alive.
+                  final nav = Navigator.of(context);
+                  nav.pop();
+                  showCollectionPicker(nav.context, vn);
+                },
+              ),
+              ListTile(
                 leading: Icon(Icons.delete_outline, color: scheme.error),
                 title: Text('Remove from lists',
                     style: TextStyle(color: scheme.error)),
-                onTap: () => run(() => repo.remove(vn.id), 'Removed'),
+                onTap: () => _removeWithUndo(context, ref),
               ),
             ],
           ],

@@ -36,6 +36,7 @@ class AppSettings {
     this.blurSensitiveCovers = true,
     this.showSexualTags = false,
     this.library = const LibraryPrefs(),
+    this.lastBackupAt,
   });
 
   final ThemeMode themeMode;
@@ -50,6 +51,9 @@ class AppSettings {
   /// Home screen Filter · Sort · Display options.
   final LibraryPrefs library;
 
+  /// When you last made a backup (shown in Data and storage).
+  final DateTime? lastBackupAt;
+
   AppSettings copyWith({
     ThemeMode? themeMode,
     ThemePreset? preset,
@@ -58,6 +62,7 @@ class AppSettings {
     bool? blurSensitiveCovers,
     bool? showSexualTags,
     LibraryPrefs? library,
+    DateTime? lastBackupAt,
   }) =>
       AppSettings(
         themeMode: themeMode ?? this.themeMode,
@@ -67,6 +72,7 @@ class AppSettings {
         blurSensitiveCovers: blurSensitiveCovers ?? this.blurSensitiveCovers,
         showSexualTags: showSexualTags ?? this.showSexualTags,
         library: library ?? this.library,
+        lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       );
 
   Map<String, Object?> toJson() => {
@@ -77,6 +83,7 @@ class AppSettings {
         'blurSensitiveCovers': blurSensitiveCovers,
         'showSexualTags': showSexualTags,
         'library': library.toJson(),
+        'lastBackupAt': lastBackupAt?.millisecondsSinceEpoch,
       };
 
   /// Unknown or missing values fall back to defaults, so adding a setting
@@ -98,6 +105,9 @@ class AppSettings {
           ? LibraryPrefs.fromJson((j['library'] as Map).cast<String, Object?>())
           // Older saves only had the sort; keep it.
           : LibraryPrefs(sort: pick(ListSort.values, j['listSort'], ListSort.updated)),
+      lastBackupAt: j['lastBackupAt'] is int
+          ? DateTime.fromMillisecondsSinceEpoch(j['lastBackupAt'] as int)
+          : null,
     );
   }
 }

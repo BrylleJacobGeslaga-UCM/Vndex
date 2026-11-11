@@ -193,7 +193,14 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
             padding: const EdgeInsets.only(bottom: 32),
             children: [
               _savedSearches(),
-              if (_draft.developer != null) _developerRow(),
+              if (_draft.developer != null || _draft.staff != null) _developerRow(),
+              SwitchListTile(
+                secondary: const Icon(Icons.translate),
+                title: const Text('Available in English'),
+                subtitle: const Text('Official release or fan translation'),
+                value: _draft.englishOnly,
+                onChanged: (v) => _update(_draft.copyWith(englishOnly: v)),
+              ),
               _section(
                 'Sort',
                 _draft.sort.label,
@@ -298,19 +305,32 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
     );
   }
 
-  /// Shown when browsing one studio's VNs; tap ✕ to search all studios.
+  /// Shown when browsing one studio's or one person's VNs; ✕ removes it.
   Widget _developerRow() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Developer', style: Theme.of(context).textTheme.titleSmall),
+          Text('Made by', style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
-          InputChip(
-            avatar: const Icon(Icons.business, size: 18),
-            label: Text(_draft.developer!.name),
-            onDeleted: () => _update(_draft.copyWith(developer: () => null)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (_draft.developer != null)
+                InputChip(
+                  avatar: const Icon(Icons.business, size: 18),
+                  label: Text(_draft.developer!.name),
+                  onDeleted: () => _update(_draft.copyWith(developer: () => null)),
+                ),
+              if (_draft.staff != null)
+                InputChip(
+                  avatar: const Icon(Icons.person_outline, size: 18),
+                  label: Text(_draft.staff!.name),
+                  onDeleted: () => _update(_draft.copyWith(staff: () => null)),
+                ),
+            ],
           ),
         ],
       ),

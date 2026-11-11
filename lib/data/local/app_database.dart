@@ -14,6 +14,7 @@ import 'db_factory.dart';
 ///
 /// They're separate so refreshing VNDB info never wipes your progress.
 ///  * `saved_search` your saved Browse filters (name + filter).
+///  * `collection`   your own collections (name + VN ids).
 ///  * `settings`     theme, date format, 18+ options.
 class AppDatabase {
   AppDatabase._(this.db);
@@ -25,6 +26,9 @@ class AppDatabase {
 
   /// Saved Browse filters. Auto-numbered keys.
   static final savedSearchStore = intMapStoreFactory.store('saved_search');
+
+  /// Your collections: name, order, and the VN ids in each.
+  static final collectionStore = intMapStoreFactory.store('collection');
 
   /// App settings (one record, key "app").
   static final settingsStore = stringMapStoreFactory.store('settings');

@@ -1,13 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/local/app_database.dart';
+import '../data/local/backup_service.dart';
 import '../data/local/settings_store.dart';
 import '../data/remote/vndb_api.dart';
 import '../data/repository/vn_repository.dart';
 import '../models/app_settings.dart';
 import '../models/browse_filter.dart';
 import '../models/character.dart';
+import '../models/english.dart';
+import '../models/quote.dart';
 import '../models/user_entry.dart';
+import '../models/vn_collection.dart';
 import '../models/vn.dart';
 import '../models/vn_status.dart';
 
@@ -63,6 +67,16 @@ final vnCharactersProvider = FutureProvider.family<List<VnCharacter>, String>(
   (ref, vnId) => ref.watch(vnRepositoryProvider).getCharacters(vnId),
 );
 
+/// English availability of one VN (detail screen).
+final englishProvider = FutureProvider.family<EnglishAvailability, String>(
+  (ref, vnId) => ref.watch(vnRepositoryProvider).getEnglishAvailability(vnId),
+);
+
+/// Quotes from one VN (detail screen).
+final vnQuotesProvider = FutureProvider.family<List<VnQuote>, String>(
+  (ref, vnId) => ref.watch(vnRepositoryProvider).getQuotes(vnId),
+);
+
 /// Your saved Browse filters. Invalidate after saving or deleting one.
 final savedSearchesProvider = FutureProvider<List<SavedSearch>>(
   (ref) => ref.watch(vnRepositoryProvider).getSavedSearches(),
@@ -73,9 +87,51 @@ void refreshLibrary(WidgetRef ref) {
   ref.invalidate(statusListProvider);
   ref.invalidate(statusCountsProvider);
   ref.invalidate(userEntryProvider);
+  ref.invalidate(collectionsProvider);
+  ref.invalidate(collectionEntriesProvider);
+  ref.invalidate(vnCollectionsProvider);
+}
+
+/// Same, for code that runs after its widget is gone (e.g. a snackbar's
+/// Undo button pressed after the sheet closed).
+void refreshLibraryIn(ProviderContainer container) {
+  container.invalidate(statusListProvider);
+  container.invalidate(statusCountsProvider);
+  container.invalidate(userEntryProvider);
+  container.invalidate(collectionsProvider);
+  container.invalidate(collectionEntriesProvider);
+  container.invalidate(vnCollectionsProvider);
+}
+
+// ---------- Collections ----------
+
+/// All your collections, in order (they appear as tabs after the lists).
+final collectionsProvider = FutureProvider<List<VnCollection>>(
+  (ref) => ref.watch(vnRepositoryProvider).getCollections(),
+);
+
+/// The VNs in one collection.
+final collectionEntriesProvider = FutureProvider.family<List<LibraryEntry>, int>(
+  (ref, key) => ref.watch(vnRepositoryProvider).getCollectionEntries(key),
+);
+
+/// Which collections one VN is in.
+final vnCollectionsProvider = FutureProvider.family<Set<int>, String>(
+  (ref, vnId) => ref.watch(vnRepositoryProvider).collectionsFor(vnId),
+);
+
+/// Call after creating, renaming, deleting or changing a collection.
+void refreshCollections(WidgetRef ref) {
+  ref.invalidate(collectionsProvider);
+  ref.invalidate(collectionEntriesProvider);
+  ref.invalidate(vnCollectionsProvider);
 }
 
 // ---------- Settings ----------
+
+final backupServiceProvider = Provider<BackupService>(
+  (ref) => BackupService(ref.watch(appDatabaseProvider)),
+);
 
 final settingsStoreProvider = Provider<SettingsStore>(
   (ref) => SettingsStore(ref.watch(appDatabaseProvider)),
@@ -98,6 +154,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
   /// Applies a change right away and saves it in the background.
   void update(AppSettings Function(AppSettings current) change) {
     state = change(state);
+    ref.read(settingsStoreProvider).save(state);
+  }
+
+  /// After restoring a backup: switch to the restored settings.
+  void replaceAll(AppSettings settings) {
+    state = settings;
     ref.read(settingsStoreProvider).save(state);
   }
 

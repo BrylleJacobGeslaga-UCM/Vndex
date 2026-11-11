@@ -17,12 +17,16 @@ class SensitiveImage extends ConsumerStatefulWidget {
     required this.url,
     required this.sensitive,
     this.fit = BoxFit.cover,
+    this.alignment = Alignment.center,
     this.onTap,
   });
 
   final String url;
   final bool sensitive;
   final BoxFit fit;
+
+  /// Which part stays visible when cropped (e.g. topCenter keeps faces).
+  final Alignment alignment;
   final VoidCallback? onTap;
 
   @override
@@ -49,12 +53,14 @@ class _SensitiveImageState extends ConsumerState<SensitiveImage> {
         ? Image.network(
             widget.url,
             fit: widget.fit,
+            alignment: widget.alignment,
             webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
             errorBuilder: (_, __, ___) => placeholder(Icons.broken_image_outlined),
           )
         : CachedNetworkImage(
             imageUrl: widget.url,
             fit: widget.fit,
+            alignment: widget.alignment,
             placeholder: (_, __) => placeholder(Icons.image_outlined),
             errorWidget: (_, __, ___) => placeholder(Icons.broken_image_outlined),
           );

@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/vn_status.dart';
 import '../../providers/providers.dart';
+import '../../models/vn_collection.dart';
 import '../browse/browse_screen.dart';
+import '../roulette/roulette_screen.dart';
 import '../settings/settings_screen.dart';
 import 'widgets/library_sheet.dart';
 import 'widgets/status_list_view.dart';
 
-/// Main screen: All + one tab per list.
-/// Top bar: search your lists, Filter · Sort · Display sheet, settings.
+/// Main screen: All + one tab per list + one per collection.
+/// Top bar: search your lists, roulette, Filter · Sort · Display, settings.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -49,13 +51,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // With tabs turned off, only "All" is shown.
     final tabs = prefs.showTabs ? <VnStatus?>[null, ...VnStatus.values] : <VnStatus?>[null];
 
+    // Your collections come after the four lists.
+    final collections = prefs.showTabs
+        ? ref.watch(collectionsProvider).maybeWhen(
+              data: (c) => c,
+              orElse: () => const <VnCollection>[],
+            )
+        : const <VnCollection>[];
+    final tabCount = tabs.length + collections.length;
+
     String tabLabel(String label, int? count) =>
         prefs.showTabCounts && count != null ? '$label ($count)' : label;
 
     return DefaultTabController(
       // Key forces a fresh controller when the number of tabs changes.
-      key: ValueKey(tabs.length),
-      length: tabs.length,
+      key: ValueKey(tabCount),
+      length: tabCount,
       child: PopScope(
         // Back button closes the search box first.
         canPop: !_searching,
@@ -106,6 +117,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   icon: const Icon(Icons.search),
                   onPressed: _startSearch,
                 ),
+              if (!_searching)
+                IconButton(
+                  tooltip: 'What should I play next?',
+                  icon: const Icon(Icons.casino_outlined),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RouletteScreen()),
+                  ),
+                ),
               IconButton(
                 tooltip: 'Filter, sort and display',
                 // Accent color when a filter is on, like Mihon.
@@ -136,13 +155,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 text: tabLabel('All', counts.isEmpty ? null : total),
                               )
                             : Tab(icon: Icon(s.icon), text: tabLabel(s.label, counts[s])),
+                      for (final c in collections)
+                        Tab(
+                          icon: const Icon(Icons.folder_outlined),
+                          text: tabLabel(c.name, c.count),
+                        ),
                     ],
                   )
                 : null,
           ),
           body: prefs.showTabs
               ? TabBarView(
-                  children: [for (final s in tabs) StatusListView(status: s)],
+                  children: [
+                    for (final s in tabs) StatusListView(status: s),
+                    for (final c in collections) StatusListView.collection(c),
+                  ],
                 )
               : const StatusListView(status: null),
           floatingActionButton: FloatingActionButton.extended(
@@ -151,7 +178,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onPressed: () => Navigator.of(context)
                 .push(MaterialPageRoute(builder: (_) => const BrowseScreen()))
                 // You may have added VNs while browsing.
-                .then((_) => ref.invalidate(statusListProvider)),
+                .then((_) => refreshLibrary(ref)),
           ),
         ),
       ),

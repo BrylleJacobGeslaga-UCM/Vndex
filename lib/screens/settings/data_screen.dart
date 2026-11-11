@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/vn_status.dart';
 import '../../providers/providers.dart';
+import 'widgets/backup_section.dart';
 import 'widgets/settings_widgets.dart';
 
 /// What's stored on this device, and ways to clear it.
@@ -62,6 +63,8 @@ class DataScreen extends ConsumerWidget {
             trailing: Text('$saved', style: Theme.of(context).textTheme.titleLarge),
           ),
 
+          const BackupSection(),
+
           const SectionHeader('Clear data'),
           ListTile(
             leading: const Icon(Icons.bookmark_remove_outlined),
@@ -80,13 +83,13 @@ class DataScreen extends ConsumerWidget {
           ListTile(
             leading: Icon(Icons.delete_forever_outlined, color: error),
             title: Text('Delete all data', style: TextStyle(color: error)),
-            subtitle: const Text('Your lists, ratings, reviews and saved searches'),
+            subtitle: const Text('Your lists, ratings, reviews, collections and saved searches'),
             onTap: () async {
               if (!await _confirm(
                 context,
                 'Delete all data?',
                 'This removes all $total VNs from your lists, with their ratings '
-                    'and reviews, plus your saved searches. It cannot be undone. '
+                    'and reviews, plus your collections and saved searches. It cannot be undone. '
                     'Settings are kept.',
               )) {
                 return;
@@ -99,7 +102,7 @@ class DataScreen extends ConsumerWidget {
           ),
           const InfoNote(
             'Everything is stored only on this device. Chrome and your phone '
-            'each keep their own separate data.',
+            'each keep their own data — use a backup to move it between them.',
           ),
         ],
       ),

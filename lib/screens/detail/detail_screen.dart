@@ -3,20 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format.dart';
 import '../../core/widgets/add_to_list_sheet.dart';
+import '../../core/widgets/collection_picker_sheet.dart';
 import '../../core/widgets/vn_cover.dart';
 import '../../models/browse_filter.dart';
+import '../../models/english.dart';
 import '../../models/vn.dart';
 import '../../providers/providers.dart';
 import '../browse/browse_screen.dart';
 import 'widgets/character_section.dart';
 import 'widgets/description_section.dart';
+import 'widgets/quote_section.dart';
 import 'widgets/rating_review_card.dart';
 import 'widgets/related_section.dart';
 import 'widgets/screenshot_section.dart';
+import 'widgets/staff_section.dart';
 import 'widgets/tag_section.dart';
+import 'widgets/vndb_links_card.dart';
 
 /// Everything about one VN: header (with tappable studios), your rating &
-/// review, description, related VNs, screenshots, characters, tags.
+/// review, description, related VNs, screenshots, characters, tags,
+/// quotes, and links to the VNDB discussion board.
 ///
 /// Opens instantly using the [vn] you tapped (title, cover, etc.), then
 /// loads the description and tags from VNDB underneath.
@@ -51,10 +57,18 @@ class DetailScreen extends ConsumerWidget {
                   label: const Text('Add to list'),
                   onPressed: () => showAddToListSheet(context, shown),
                 )
-              : FilledButton.tonalIcon(
-                  icon: Icon(entry.status.icon),
-                  label: Text(entry.status.label),
-                  onPressed: () => showAddToListSheet(context, shown),
+              : Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        icon: Icon(entry.status.icon),
+                        label: Text(entry.status.label),
+                        onPressed: () => showAddToListSheet(context, shown),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _CollectionsButton(vn: shown),
+                  ],
                 ),
 
           if (entry != null) ...[
@@ -80,6 +94,10 @@ class DetailScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   RelatedSection(relations: d.relations),
                 ],
+                if (d.staff.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  StaffSection(staff: d.staff),
+                ],
                 if (d.screenshots.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   ScreenshotSection(screenshots: d.screenshots),
@@ -88,6 +106,10 @@ class DetailScreen extends ConsumerWidget {
                 CharacterSection(vnId: d.id),
                 const SizedBox(height: 24),
                 TagSection(vn: d),
+                const SizedBox(height: 24),
+                QuoteSection(vnId: d.id),
+                const SizedBox(height: 16),
+                VndbLinksCard(vnId: d.id),
               ],
             ),
           ),
@@ -133,6 +155,7 @@ class _Header extends StatelessWidget {
               const SizedBox(height: 4),
               if (vn.released != null) info(Icons.event, vn.released!),
               if (vn.developerList.isNotEmpty) _DeveloperLinks(vn: vn),
+              _EnglishLine(vnId: vn.id),
               if (vn.lengthMinutes != null)
                 info(Icons.schedule, formatLength(vn.lengthMinutes!)),
               if (vn.ratingLabel != null)
@@ -231,6 +254,73 @@ class _DeveloperLinks extends StatelessWidget {
           decoration: TextDecoration.underline,
           decorationColor: scheme.primary.withValues(alpha: 0.5),
         ),
+      ),
+    );
+  }
+}
+
+/// Opens the collection picker; shows how many collections the VN is in.
+class _CollectionsButton extends ConsumerWidget {
+  const _CollectionsButton({required this.vn});
+
+  final Vn vn;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(vnCollectionsProvider(vn.id)).maybeWhen(
+          data: (k) => k.length,
+          orElse: () => 0,
+        );
+    return OutlinedButton.icon(
+      icon: Icon(count > 0 ? Icons.folder : Icons.create_new_folder_outlined),
+      label: Text(count > 0 ? '$count' : 'Collect'),
+      onPressed: () => showCollectionPicker(context, vn),
+    );
+  }
+}
+
+/// "Official English release" / "Fan translation" / … under the studio.
+class _EnglishLine extends ConsumerWidget {
+  const _EnglishLine({required this.vnId});
+
+  final String vnId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final english = ref.watch(englishProvider(vnId)).maybeWhen(
+          data: (e) => e,
+          orElse: () => null,
+        );
+    if (english == null) return const SizedBox.shrink(); // loading/offline
+
+    final scheme = Theme.of(context).colorScheme;
+    final color = switch (english.kind) {
+      EnglishKind.official => const Color(0xFF4CAF6A),
+      EnglishKind.upcoming => const Color(0xFFE0A33A),
+      EnglishKind.fan => const Color(0xFF4F8EF7),
+      EnglishKind.machine || EnglishKind.none => scheme.outline,
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(english.kind.icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              english.label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: color,
+                    fontWeight: english.kind.isPlayable ? FontWeight.w600 : null,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }

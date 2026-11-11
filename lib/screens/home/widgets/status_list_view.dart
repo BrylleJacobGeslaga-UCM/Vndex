@@ -6,31 +6,42 @@ import '../../../core/widgets/add_to_list_sheet.dart';
 import '../../../core/widgets/vn_result_tile.dart';
 import '../../../models/library_prefs.dart';
 import '../../../models/user_entry.dart';
+import '../../../models/vn_collection.dart';
 import '../../../models/vn_status.dart';
 import '../../../providers/providers.dart';
 import '../../detail/detail_screen.dart';
 import 'empty_list.dart';
 import 'library_grid.dart';
 
-/// The contents of one tab: your VNs in that status (or every status when
-/// [status] is null — the "All" tab), filtered, sorted and displayed as set
-/// in the library sheet, plus the home screen's search box.
+/// The contents of one tab: your VNs in that status, every status when
+/// [status] is null (the "All" tab), or one of your collections when
+/// [collection] is set. Filtered, sorted and displayed as set in the
+/// library sheet, plus the home screen's search box.
 class StatusListView extends ConsumerWidget {
-  const StatusListView({super.key, required this.status});
+  const StatusListView({super.key, required this.status, this.collection});
 
-  /// null = All.
+  /// A collection tab instead.
+  const StatusListView.collection(VnCollection this.collection, {super.key})
+      : status = null;
+
+  /// null = All (unless [collection] is set).
   final VnStatus? status;
+  final VnCollection? collection;
+
+  String get _tabName => collection?.name ?? status?.label ?? 'All';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final list = ref.watch(statusListProvider(status));
+    final list = collection != null
+        ? ref.watch(collectionEntriesProvider(collection!.key))
+        : ref.watch(statusListProvider(status));
     final prefs = ref.watch(settingsProvider.select((s) => s.library));
     final query = ref.watch(librarySearchProvider).trim().toLowerCase();
 
     void openDetail(LibraryEntry e) => Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => DetailScreen(vn: e.vn)))
         // Score/note may have changed on the detail page.
-        .then((_) => ref.invalidate(statusListProvider));
+        .then((_) => refreshLibrary(ref));
 
     return list.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -41,7 +52,9 @@ class StatusListView extends ConsumerWidget {
         ),
       ),
       data: (all) {
-        if (all.isEmpty) return EmptyList(status: status);
+        if (all.isEmpty) {
+          return EmptyList(status: status, collectionName: collection?.name);
+        }
 
         final entries = sortEntries(
           filterEntries(all, query, prefs),
@@ -54,7 +67,7 @@ class StatusListView extends ConsumerWidget {
               padding: const EdgeInsets.all(32),
               child: Text(
                 query.isNotEmpty
-                    ? 'No matches for "$query" in ${status?.label ?? 'All'}'
+                    ? 'No matches for "$query" in $_tabName'
                     : 'No VNs match your filters',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -63,6 +76,7 @@ class StatusListView extends ConsumerWidget {
           );
         }
 
+        // All and collections mix lists, so they show which list each VN is in.
         final showStatus = status == null && prefs.showStatus;
 
         if (prefs.display.isGrid) {

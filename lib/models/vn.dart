@@ -70,6 +70,39 @@ class VnDeveloper {
       : VnDeveloper(name: v as String);
 }
 
+/// A person credited on VNDB (writer, artist, composer…). Used to browse
+/// everything they worked on.
+class StaffRef {
+  const StaffRef({required this.id, required this.name});
+
+  final String id; // "s123"
+  final String name;
+
+  Map<String, Object?> toJson() => {'id': id, 'name': name};
+
+  factory StaffRef.fromJson(Map<String, Object?> j) =>
+      StaffRef(id: j['id'] as String, name: j['name'] as String);
+}
+
+/// One staff credit on a VN, e.g. Hayashi Chiyomaru as Scenario.
+class VnStaff {
+  const VnStaff({required this.person, required this.role, this.original});
+
+  final StaffRef person;
+  final String role; // VNDB code: "scenario", "music", ...
+  final String? original; // name in the original script
+
+  /// The roles shown on VN pages, in display order, with labels.
+  static const shownRoles = {
+    'director': 'Director',
+    'scenario': 'Writer',
+    'chardesign': 'Character design',
+    'art': 'Artist',
+    'music': 'Composer',
+    'songs': 'Vocals',
+  };
+}
+
 /// Another VN related to this one: prequel, sequel, fandisc, etc.
 class VnRelation {
   const VnRelation({
@@ -130,6 +163,7 @@ class Vn {
     this.tags = const [],
     this.screenshots = const [],
     this.relations = const [],
+    this.staff = const [],
   });
 
   final String id; // e.g. "v17"
@@ -160,6 +194,9 @@ class Vn {
   /// Only loaded on the detail screen, not saved offline. Sorted with
   /// prequels and sequels first.
   final List<VnRelation> relations;
+
+  /// Only loaded on the detail screen, not saved offline.
+  final List<VnStaff> staff;
 
   /// Covers rated suggestive or worse get blurred until tapped.
   bool get isCoverSensitive => imageSexual >= 1 || imageViolence >= 1;
@@ -222,6 +259,7 @@ class Vn {
     final rawTags = (json['tags'] as List<dynamic>?) ?? const [];
     final rawShots = (json['screenshots'] as List<dynamic>?) ?? const [];
     final rawRelations = (json['relations'] as List<dynamic>?) ?? const [];
+    final rawStaff = (json['staff'] as List<dynamic>?) ?? const [];
 
     final relations = [
       for (final r in rawRelations.cast<Map<String, dynamic>>())
@@ -270,6 +308,15 @@ class Vn {
           VnScreenshot.fromJson(sc),
       ],
       relations: relations,
+      staff: [
+        for (final st in rawStaff.cast<Map<String, dynamic>>())
+          if (st['id'] is String && st['name'] is String)
+            VnStaff(
+              person: StaffRef(id: st['id'] as String, name: st['name'] as String),
+              role: st['role'] as String? ?? 'staff',
+              original: st['original'] as String?,
+            ),
+      ],
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'about_screen.dart';
 import 'appearance_screen.dart';
+import 'collections_screen.dart';
 import 'content_screen.dart';
 import 'data_screen.dart';
 
@@ -28,10 +29,12 @@ class SettingsScreen extends StatelessWidget {
         children: [
           item(Icons.palette_outlined, 'Appearance', 'Theme, date format',
               const AppearanceScreen()),
+          item(Icons.collections_bookmark_outlined, 'Collections',
+              'Create, rename, reorder', const CollectionsScreen()),
           item(Icons.eighteen_up_rating_outlined, 'Content',
               'Sensitive covers, sexual content tags', const ContentScreen()),
           item(Icons.storage_outlined, 'Data and storage',
-              'Library size, clear data', const DataScreen()),
+              'Backup, restore, clear data', const DataScreen()),
           item(Icons.info_outline, 'About', 'Version, credits, licenses',
               const AboutScreen()),
         ],
