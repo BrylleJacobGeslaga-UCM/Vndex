@@ -53,6 +53,63 @@ class VnScreenshot {
       );
 }
 
+/// A developer (VNDB "producer"), e.g. "5pb." with id "p63".
+/// [id] is null only for VNs saved before ids were stored; it fills in
+/// when the VN page is opened online.
+class VnDeveloper {
+  const VnDeveloper({this.id, required this.name});
+
+  final String? id;
+  final String name;
+
+  Map<String, Object?> toJson() => {'id': id, 'name': name};
+
+  /// Accepts the old format (just a name) and the new one (id + name).
+  factory VnDeveloper.fromStored(Object? v) => v is Map
+      ? VnDeveloper(id: v['id'] as String?, name: v['name'] as String)
+      : VnDeveloper(name: v as String);
+}
+
+/// Another VN related to this one: prequel, sequel, fandisc, etc.
+class VnRelation {
+  const VnRelation({
+    required this.vn,
+    required this.type,
+    required this.official,
+  });
+
+  final Vn vn;
+  final String type; // VNDB code: "preq", "seq", "fan", ...
+  final bool official; // false = fan-made or unofficial link
+
+  static const _labels = {
+    'preq': 'Prequel',
+    'seq': 'Sequel',
+    'par': 'Parent story',
+    'side': 'Side story',
+    'fan': 'Fandisc',
+    'orig': 'Original game',
+    'alt': 'Alternative version',
+    'ser': 'Same series',
+    'set': 'Same setting',
+    'char': 'Shares characters',
+  };
+
+  /// Display order: story order first, loosely related last.
+  static const _order = [
+    'preq', 'seq', 'par', 'side', 'fan', 'orig', 'alt', 'ser', 'set', 'char',
+  ];
+
+  String get label => _labels[type] ?? 'Related';
+  int get sortKey {
+    final i = _order.indexOf(type);
+    return i == -1 ? _order.length : i;
+  }
+
+  /// Prequels and sequels get highlighted.
+  bool get isStoryOrder => type == 'preq' || type == 'seq';
+}
+
 /// A visual novel as returned by VNDB.
 ///
 /// Only the fields Vndex asks for are here. If you add a field, also add it
@@ -68,10 +125,11 @@ class Vn {
     this.imageUrl,
     this.imageSexual = 0,
     this.imageViolence = 0,
-    this.developers = const [],
+    this.developerList = const [],
     this.description,
     this.tags = const [],
     this.screenshots = const [],
+    this.relations = const [],
   });
 
   final String id; // e.g. "v17"
@@ -83,7 +141,10 @@ class Vn {
   final String? imageUrl;
   final double imageSexual; // 0 safe, 1 suggestive, 2 explicit (average vote)
   final double imageViolence; // same scale
-  final List<String> developers;
+  final List<VnDeveloper> developerList;
+
+  /// Just the names, e.g. for "2009 · 5pb.".
+  List<String> get developers => [for (final d in developerList) d.name];
 
   /// Only loaded on the detail screen; null in search results.
   final String? description;
@@ -95,6 +156,10 @@ class Vn {
   /// Only loaded on the detail screen, and not saved offline (they're
   /// images from the internet anyway).
   final List<VnScreenshot> screenshots;
+
+  /// Only loaded on the detail screen, not saved offline. Sorted with
+  /// prequels and sequels first.
+  final List<VnRelation> relations;
 
   /// Covers rated suggestive or worse get blurred until tapped.
   bool get isCoverSensitive => imageSexual >= 1 || imageViolence >= 1;
@@ -123,7 +188,7 @@ class Vn {
         'image_url': imageUrl,
         'image_sexual': imageSexual,
         'image_violence': imageViolence,
-        'developers': jsonEncode(developers),
+        'developers': jsonEncode([for (final d in developerList) d.toJson()]),
         if (description != null) 'description': description,
         if (tags.isNotEmpty) 'tags': [for (final t in tags) t.toDb()],
         'last_fetched': fetchedAt,
@@ -143,9 +208,9 @@ class Vn {
       imageUrl: row['image_url'] as String?,
       imageSexual: (row['image_sexual'] as num?)?.toDouble() ?? 0,
       imageViolence: (row['image_violence'] as num?)?.toDouble() ?? 0,
-      developers: devs == null
+      developerList: devs == null
           ? const []
-          : (jsonDecode(devs) as List<dynamic>).cast<String>(),
+          : [for (final d in jsonDecode(devs) as List<dynamic>) VnDeveloper.fromStored(d)],
       description: row['description'] as String?,
       tags: [for (final t in tags) VnTag.fromDb(t as Map<String, Object?>)],
     );
@@ -156,6 +221,21 @@ class Vn {
     final devs = (json['developers'] as List<dynamic>?) ?? const [];
     final rawTags = (json['tags'] as List<dynamic>?) ?? const [];
     final rawShots = (json['screenshots'] as List<dynamic>?) ?? const [];
+    final rawRelations = (json['relations'] as List<dynamic>?) ?? const [];
+
+    final relations = [
+      for (final r in rawRelations.cast<Map<String, dynamic>>())
+        VnRelation(
+          vn: Vn.fromJson(r),
+          type: r['relation'] as String? ?? '',
+          official: r['relation_official'] as bool? ?? true,
+        ),
+    ]..sort((a, b) {
+        final byType = a.sortKey.compareTo(b.sortKey);
+        if (byType != 0) return byType;
+        // Same type: oldest release first (e.g. sequel 1 before sequel 2).
+        return (a.vn.released ?? '9999').compareTo(b.vn.released ?? '9999');
+      });
 
     // Keep only spoiler-free, non-disputed tags, most relevant first, max 20.
     final tags = [
@@ -179,8 +259,9 @@ class Vn {
       imageUrl: image?['url'] as String?,
       imageSexual: (image?['sexual'] as num?)?.toDouble() ?? 0,
       imageViolence: (image?['violence'] as num?)?.toDouble() ?? 0,
-      developers: [
-        for (final d in devs) (d as Map<String, dynamic>)['name'] as String,
+      developerList: [
+        for (final d in devs.cast<Map<String, dynamic>>())
+          VnDeveloper(id: d['id'] as String?, name: d['name'] as String),
       ],
       description: json['description'] as String?,
       tags: tags.take(20).toList(),
@@ -188,6 +269,7 @@ class Vn {
         for (final sc in rawShots.cast<Map<String, dynamic>>())
           VnScreenshot.fromJson(sc),
       ],
+      relations: relations,
     );
   }
 }

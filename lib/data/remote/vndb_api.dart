@@ -34,7 +34,7 @@ class VndbApi {
 
   /// Fields for list/search results. VNDB needs every field named explicitly.
   static const String _listFields = 'title, alttitle, released, rating, '
-      'length_minutes, image{url,sexual,violence}, developers{name}';
+      'length_minutes, image{url,sexual,violence}, developers{id,name}';
 
   /// Search VNs by title. Best matches first.
   Future<List<Vn>> searchVn(String query, {int results = 25}) async {
@@ -50,7 +50,9 @@ class VndbApi {
   /// Extra fields for the detail screen.
   static const String _detailFields =
       '$_listFields, description, tags{id,name,rating,spoiler,lie,category}, '
-      'screenshots{url,thumbnail,sexual,violence}';
+      'screenshots{url,thumbnail,sexual,violence}, '
+      'relations{id,title,released,relation,relation_official,'
+      'image{url,sexual,violence}}';
 
   /// Fetch one VN with full details (description, tags) by id, e.g. "v17".
   /// Returns null if it doesn't exist.

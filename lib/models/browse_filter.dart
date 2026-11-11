@@ -97,6 +97,7 @@ class BrowseFilter {
     this.includeTags = const [],
     this.excludeTags = const [],
     this.excludeVnId,
+    this.developer,
   });
 
   final BrowseSort sort;
@@ -111,6 +112,9 @@ class BrowseFilter {
   final List<TagRef> includeTags; // must have ALL of these
   final List<TagRef> excludeTags; // must have NONE of these
   final String? excludeVnId; // "Find similar" hides the VN itself; not saved
+
+  /// Only VNs by this developer (set by tapping a studio on a VN page).
+  final VnDeveloper? developer;
 
   /// The "Popular" chip.
   static const popular = BrowseFilter();
@@ -127,7 +131,8 @@ class BrowseFilter {
       (minRating != null ? 1 : 0) +
       (yearFrom != null || yearTo != null ? 1 : 0) +
       includeTags.length +
-      excludeTags.length;
+      excludeTags.length +
+      (developer != null ? 1 : 0);
 
   BrowseFilter copyWith({
     BrowseSort? sort,
@@ -141,6 +146,7 @@ class BrowseFilter {
     bool? releasedOnly,
     List<TagRef>? includeTags,
     List<TagRef>? excludeTags,
+    VnDeveloper? Function()? developer, // wrapped so it can be set to null
   }) =>
       BrowseFilter(
         sort: sort ?? this.sort,
@@ -155,6 +161,7 @@ class BrowseFilter {
         includeTags: includeTags ?? this.includeTags,
         excludeTags: excludeTags ?? this.excludeTags,
         excludeVnId: excludeVnId,
+        developer: developer != null ? developer() : this.developer,
       );
 
   /// Turns the filter into VNDB's filter format.
@@ -180,6 +187,7 @@ class BrowseFilter {
       for (final t in includeTags) ['tag', '=', [t.id, 0, 1]],
       for (final t in excludeTags) ['tag', '!=', [t.id, 0, 1]],
       if (excludeVnId != null) ['id', '!=', excludeVnId!],
+      if (developer?.id != null) ['developer', '=', ['id', '=', developer!.id!]],
     ];
   }
 
@@ -197,6 +205,7 @@ class BrowseFilter {
         'releasedOnly': releasedOnly,
         'includeTags': [for (final t in includeTags) t.toJson()],
         'excludeTags': [for (final t in excludeTags) t.toJson()],
+        if (developer != null) 'developer': developer!.toJson(),
       };
 
   factory BrowseFilter.fromJson(Map<String, Object?> j) {
@@ -220,6 +229,7 @@ class BrowseFilter {
       releasedOnly: j['releasedOnly'] as bool? ?? false,
       includeTags: tags('includeTags'),
       excludeTags: tags('excludeTags'),
+      developer: j['developer'] == null ? null : VnDeveloper.fromStored(j['developer']),
     );
   }
 }

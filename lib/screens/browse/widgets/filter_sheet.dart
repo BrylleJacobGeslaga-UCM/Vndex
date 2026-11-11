@@ -193,6 +193,7 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
             padding: const EdgeInsets.only(bottom: 32),
             children: [
               _savedSearches(),
+              if (_draft.developer != null) _developerRow(),
               _section(
                 'Sort',
                 _draft.sort.label,
@@ -291,6 +292,25 @@ class _FilterSheetState extends ConsumerState<FilterSheet> {
                   ),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Shown when browsing one studio's VNs; tap ✕ to search all studios.
+  Widget _developerRow() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Developer', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          InputChip(
+            avatar: const Icon(Icons.business, size: 18),
+            label: Text(_draft.developer!.name),
+            onDeleted: () => _update(_draft.copyWith(developer: () => null)),
           ),
         ],
       ),
