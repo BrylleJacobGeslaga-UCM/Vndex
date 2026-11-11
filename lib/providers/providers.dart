@@ -6,6 +6,7 @@ import '../data/local/settings_store.dart';
 import '../data/remote/vndb_api.dart';
 import '../data/repository/vn_repository.dart';
 import '../models/app_settings.dart';
+import '../services/home_widget_sync.dart';
 import '../models/browse_filter.dart';
 import '../models/character.dart';
 import '../models/english.dart';
@@ -82,8 +83,18 @@ final savedSearchesProvider = FutureProvider<List<SavedSearch>>(
   (ref) => ref.watch(vnRepositoryProvider).getSavedSearches(),
 );
 
+/// Updates the Android home screen widget ("Currently playing").
+final homeWidgetSyncProvider = Provider<HomeWidgetSync>(
+  (ref) => HomeWidgetSync(
+    ref.watch(vnRepositoryProvider),
+    () => ref.read(settingsProvider),
+  ),
+);
+
 /// Call after adding, moving or removing a VN so every screen reloads.
+/// Also refreshes the home screen widget.
 void refreshLibrary(WidgetRef ref) {
+  ref.read(homeWidgetSyncProvider).sync();
   ref.invalidate(statusListProvider);
   ref.invalidate(statusCountsProvider);
   ref.invalidate(userEntryProvider);
@@ -95,6 +106,7 @@ void refreshLibrary(WidgetRef ref) {
 /// Same, for code that runs after its widget is gone (e.g. a snackbar's
 /// Undo button pressed after the sheet closed).
 void refreshLibraryIn(ProviderContainer container) {
+  container.read(homeWidgetSyncProvider).sync();
   container.invalidate(statusListProvider);
   container.invalidate(statusCountsProvider);
   container.invalidate(userEntryProvider);

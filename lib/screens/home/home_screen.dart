@@ -24,6 +24,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _search = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Bring the home screen widget up to date each time the app opens.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => ref.read(homeWidgetSyncProvider).sync(),
+    );
+  }
+
+  @override
   void dispose() {
     _search.dispose();
     super.dispose();

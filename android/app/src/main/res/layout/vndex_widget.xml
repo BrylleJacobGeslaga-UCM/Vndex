@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Currently playing" widget: cover on the left, up to 3 titles on the right. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="@drawable/vndex_widget_bg">
+
+    <ImageView
+        android:id="@+id/widget_cover"
+        android:layout_width="64dp"
+        android:layout_height="90dp"
+        android:layout_marginEnd="12dp"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="Cover" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Header: "Currently playing  3" -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Currently playing"
+                android:textColor="#F4B272"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#8E8C99"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/widget_title_1" style="@style/VndexWidgetTitle" android:textSize="15sp" />
+        <TextView android:id="@+id/widget_sub_1" style="@style/VndexWidgetSub" />
+
+        <TextView android:id="@+id/widget_title_2" style="@style/VndexWidgetTitle" android:layout_marginTop="4dp" />
+        <TextView android:id="@+id/widget_sub_2" style="@style/VndexWidgetSub" />
+
+        <TextView android:id="@+id/widget_title_3" style="@style/VndexWidgetTitle" android:layout_marginTop="4dp" />
+        <TextView android:id="@+id/widget_sub_3" style="@style/VndexWidgetSub" />
+
+        <TextView
+            android:id="@+id/widget_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nothing in Playing yet. Tap to open Vndex."
+            android:textColor="#C6C3D0"
+            android:textSize="13sp"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>
