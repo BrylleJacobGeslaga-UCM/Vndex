@@ -36,11 +36,10 @@ class AddToListSheet extends ConsumerWidget {
       final removed = await repo.remove(vn.id);
       refreshLibrary(ref);
       navigator.pop();
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
+      messenger.hideCurrentSnackBar();
+      final bar = messenger.showSnackBar(SnackBar(
           content: Text('Removed ${vn.title}'),
-          duration: const Duration(seconds: 6),
+          duration: const Duration(seconds: 3),
           action: removed == null
               ? null
               : SnackBarAction(
@@ -51,6 +50,14 @@ class AddToListSheet extends ConsumerWidget {
                   },
                 ),
         ));
+      // Newer Flutter keeps snackbars with a button open until tapped,
+      // so close it ourselves after 3 seconds — but only if it's still
+      // showing (Undo, a swipe or another snackbar may have closed it).
+      var open = true;
+      bar.closed.whenComplete(() => open = false);
+      Future<void>.delayed(const Duration(seconds: 3), () {
+        if (open) bar.close();
+      });
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('Could not remove: $e')));
     }
